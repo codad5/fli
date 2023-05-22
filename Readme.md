@@ -1,6 +1,6 @@
 # FLI
 
-A library for creating commnad line apps in rust
+A library for creating commnad line apps in rust inspired by the like of [commander.js](https://github.com/tj/commander.js)
 
 ```rust
 fn main(){
