@@ -4,7 +4,7 @@ A library for creating commnad line apps in rust inspired by the like of [comman
 
 ```rust
 fn main(){
-    let mut app : &Fli = Fli::init("my app");
+    let mut app : Fli = Fli::init("my app");
     app.option("-n --name, <>", |x : &Fli| {});
     app.option("-g --greet", |x : &Fli| {
         match x.get_values("--name".to_owned()){
@@ -127,4 +127,17 @@ This method takes in 2 param
   | <> | This means it needs one required data |
   | [...] | This means it can take in many optional data |
   | <...> | This means it needs at least one data, can take more |
+
+
+- `app.commad(command_name)` : 
+This is to create a new command with its own option and param like this
+Get the app general help option
+```shell
+$ my-app --help
+```
+Get the move command help option
+```shell
+$ my-app move --help # a new command called
+```
+The app command returns a new refrence instance of Fli
 
