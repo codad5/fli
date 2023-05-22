@@ -44,9 +44,12 @@ impl Fli {
         }
         let broken_args : Vec<_> = options.split(" ").collect();
         let short = broken_args[0].trim();
-        let long = broken_args[1].trim();
+        let mut long = broken_args[0].trim();
+        if broken_args.len() > 1 {
+            long = broken_args[1].trim();
+            self.short_hash_table.insert(short.to_string(), long.to_string());
+        }
         // for i in options.split(" ") {
-        self.short_hash_table.insert(short.to_string(), long.to_string());
         let mut param_type = String::new();
         if let Some(param_d) = args.get(1){
             param_type = String::from(param_d.to_owned());
@@ -61,7 +64,7 @@ impl Fli {
     }
     pub fn get_params_callback(&mut self, key : String) -> Option<&for<'a> fn(&'a Fli)>
     {
-        if let Some(callback) = self.args_hash_table.get(&key){
+        if let Some(callback) = self.args_hash_table.get(&self.get_callable_name(key)){
                 return Some(callback)
         }
         return None;
@@ -116,7 +119,7 @@ impl Fli {
             if  self.get_callable_name(arg.to_string()) == arg_full_name{
                 if let Some(value) = self.args.get(counter+1)
                 {
-                    if !value.contains("-") {
+                    if !value.starts_with("-") {
                         return true;
                     }
                 }
@@ -135,13 +138,17 @@ impl Fli {
     /**
      * Gets the Long name for a short arg
      */
-    fn get_callable_name(&self, arg: String) -> String
+    pub fn get_callable_name(&self, arg: String) -> String
     {
         let mut arg_template: String = String::from(format!("{}", arg));
-        if let Some(long_name) = self.short_hash_table.get(&arg){
+        if !arg_template.starts_with("-"){
+            arg_template = String::from(format!("-{}", arg));
+        }
+        if let Some(long_name) = self.short_hash_table.get(&arg_template){
+            println!("found long args template for {arg_template} == {long_name}");
             arg_template = long_name.to_string();
         }
-        if !arg_template.contains("--"){
+        if !arg_template.starts_with("--"){
             arg_template = String::from(format!("--{}", arg));
         }
         return arg_template;
