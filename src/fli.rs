@@ -1,42 +1,69 @@
 
-use std::{env, collections::HashMap};
+use std::{env, collections::HashMap, process};
 
 pub struct Fli {
     name:String,
+    description: String,
     args : Vec<String>,
     pub args_hash_table: HashMap<String, fn(app : &Self)>,
     short_hash_table : HashMap<String, String>,
-    cammands_hash_tables : HashMap<String, Fli>
+    cammands_hash_tables : HashMap<String, Fli>,
+    help_hash_table : HashMap<String, String>
 }
 
 impl Fli {
-    pub fn init(name : String) -> Self {
-        println!("{:?}", env::args());
-        Self {
-            name,
+    pub fn init(name : &str, description : &str) -> Self {
+        let mut app = Self {
+            name: name.to_string(),
+            description: description.to_string(),
             args: env::args().collect(),
             args_hash_table: HashMap::new(),
             short_hash_table: HashMap::new(),
             cammands_hash_tables: HashMap::new(),
-        }
+            help_hash_table:HashMap::new()
+        };
+        app.option("-h --help", &format!("print help screen for {}", app.name), |x|{x.default_help()});
+        return app;
     }
-    pub fn command(&mut self, name: String) -> &mut Fli
+    pub fn command(&mut self, name: &str, description : &str) -> &mut Fli
     {
         let mut args = self.args.clone();
         args.remove(0);
         println!("args: {:?}", args);
-        let new_fli = Self {
-            name:name.clone(),
+        let mut new_fli = Self {
+            name:name.to_string(),
+            description: description.to_string(),
             args: args,
             args_hash_table: HashMap::new(),
             short_hash_table: HashMap::new(),
             cammands_hash_tables: HashMap::new(),
+            help_hash_table:HashMap::new()
         };
-        self.cammands_hash_tables.insert(name.clone(), new_fli);
-        return self.cammands_hash_tables.get_mut(&name).unwrap();
+        new_fli.option("-h --help", &format!("print help screen for {}", new_fli.name), |x|{x.default_help()});
+        self.cammands_hash_tables.insert(name.to_string(), new_fli);
+        self.help_hash_table.insert(name.to_string(), description.to_string());
+        return self.cammands_hash_tables.get_mut(&name.to_string()).unwrap();
     }
-
-    pub fn option(&mut self, key: String, value: fn(app : &Self)) -> &Fli{
+    pub fn print_help(&self, message : &str){
+        println!("ERROR ================================");
+        println!("{message}");
+        println!("================================");
+        self.default_help();
+        process::exit(0);
+    }
+    fn default_help(&self){
+        println!("Name: {}", self.name);
+        println!("Description {}", self.description);
+        println!("Commands and Options");
+        for key in self.help_hash_table.keys(){
+            if let Some(description) = self.help_hash_table.get(key){
+                let mut key = key.clone();
+                key.shrink_to(12);
+                println!(" . {}   : {description}", key);
+            }
+        }
+    }
+    pub fn option(&mut self, key: &str, description : &str, value: fn(app : &Self)) -> &Fli{
         let args : Vec<&str> = key.split(",").collect();
         let mut options = String::new();
         if let Some(opts)  = args.get(0){
@@ -55,10 +82,11 @@ impl Fli {
             param_type = String::from(param_d.to_owned());
         }
         if args.len() > 1 && ["<>", "[]", "<...>", "[...]"].contains(&param_type.trim()) == false {
-            panic!("Error : unknown param type {}", param_type)
+            self.print_help(&format!("Error : unknown param type {param_type}"));
         }
         let option : String = long.trim().to_owned()+" "+param_type.trim();
         self.args_hash_table.insert(option.trim().to_owned(), value);
+        self.help_hash_table.insert(short.to_string() + " " +option.trim(), description.to_string());
         // }
         return self
     }
@@ -94,7 +122,7 @@ impl Fli {
                         // make sure a value is passed in else it should show error/help
                         if !self.has_a_value(arg.trim().to_string())
                         {
-                            panic!("{}", format!("Why Invalid syntax : {arg}  does not have a value"));
+                            self.print_help(&format!("Why Invalid syntax : {arg}  does not have a value"))
                         }
                         callbacks.push(*callback);
                     }
@@ -145,7 +173,6 @@ impl Fli {
             arg_template = String::from(format!("-{}", arg));
         }
         if let Some(long_name) = self.short_hash_table.get(&arg_template){
-            println!("found long args template for {arg_template} == {long_name}");
             arg_template = long_name.to_string();
         }
         if !arg_template.starts_with("--"){
@@ -183,7 +210,7 @@ impl Fli {
             if let Some(_) = self.args_hash_table.get(binding){
                 if let Some(v) = self.args.get(counter) {
                     if v.starts_with("-") {
-                        return Err("No value Passed 2")
+                        return Err("No value Passed")
                     }
                     values.push(v.to_string());
                     break;

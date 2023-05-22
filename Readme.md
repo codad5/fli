@@ -2,14 +2,19 @@
 
 A library for creating commnad line apps in rust inspired by the like of [commander.js](https://github.com/tj/commander.js)
 
+## Changes
+For stable changes check the [CHANGELOG.md](https://codad5/fil/blob/master/CHANGELOG.md) file
+
+For unstable changes check the [CHANGELOG.md](https://codad5/fil/blob/dev/CHANGELOG.md) file
+
 ```rust
 fn main(){
-    let mut app : Fli = Fli::init("my app");
-    app.option("-n --name, <>", |x : &Fli| {});
-    app.option("-g --greet", |x : &Fli| {
-        match x.get_values("--name".to_owned()){
-            Ok(option) => {
-                if let Some(v) = option{ println!("Good day {?}", v[0]);}
+    let mut app : Fli = Fli::init("my app", "my app description");
+    app.option("-n --name, <>", "Name to call you", |x : &Fli| {});
+    app.option("-g --greet", "greeting", |x : &Fli| {
+        match x.get_values("name".to_owned() /* passing (--name, -n or n) would work*/){
+            Ok(value) => {
+                println!("Good day {?}", value[0])
             },
             Err(_) => {},
         }
@@ -42,7 +47,7 @@ fn main(){
 ### Create an App Instance 
 ```rust
 fn main(){
-    let mut app = Fli::init("app-name");
+    let mut app = Fli::init("app-name", "app description");
 }
 ```
 ### Adding Options
@@ -50,15 +55,15 @@ fn main(){
 ```rust
 fn main(){
     let mut app = Fli::init("app-name");
-    app.option("-g --greet", greet);
-    app.option("-n --name, <>" |x|{});
+    app.option("-g --greet", "to make a greeting", greet);
+    app.option("-n --name, <>", "to set your name", |x|{});
 }
 
 // callback for the greet param
 fn greet(x: &Fli){
     match x.get_values("--name".to_owned()){
         Ok(option) => {
-            if let Some(v) = option{ println!("Good day {?}", v[0]);}
+            println!("Good day {?}", v[0]);
         },
         Err(_) => {},
     }
@@ -77,11 +82,11 @@ fn main(){
 You can also add a new command set using the command method
 ```rust
 fn main(){
-    let mut app = Fli::init("app-name");
-    let moveCommand = app.command("move");
-    moveCommand.option("-d --dir, <...>", move_file);
-    app.option("-g --greet", greet);
-    app.option("-n --name, <>" |x|{});
+    let mut app = Fli::init("app-name", "app-description");
+    let moveCommand = app.command("move", "move files");
+    moveCommand.option("-p --path, <...>", "path to files to be moved", move_file);
+    app.option("-g --greet",  "to make a greeting", greet);
+    app.option("-n --name, <>", "to set your name", |x|{});
     app.run();
 }
 fn move_file(x){ /*code to move file"*/ }
@@ -90,7 +95,7 @@ fn greet(x){ /*code to greet "*/ }
 Then you would run the command like this
 ```shell
 $ cargo run -- move -d .
-file moved successfully in 0.8s
+file(s) moved successfully in 0.8s
 ```
 
 ### Doing it in a procedual way
@@ -99,12 +104,12 @@ Like commander.js you can also do it in a procedual way
 ```rust
 fn main(){
     //  doing it procedual way
-    let mut app = Fli::init("app-name");
-    let moveCommand = app.command("move");
+    let mut app = Fli::init("app-name", "app descripton");
+    let moveCommand = app.command("move", "move files");
     // the [...] means accept optional multiple
-    moveCommand.option("-d --dir, [...]", |x){}; // pass in an empty callback
-    app.option("-g --greet", |x|{});
-    app.option("-n --name, <>" |x|{});
+    moveCommand.option("-p --path, <...>", "path to files to be moved", move_file);
+    app.option("-g --greet",  "to make a greeting", |x|{});
+    app.option("-n --name, <>", "to set your name", |x|{});
     app.run();
 
     if app.is_passed("--greet"){

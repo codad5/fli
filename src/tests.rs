@@ -9,10 +9,10 @@ fn test_add() {
 
 #[test]
 fn test_fli() {
-    let mut fli = Fli::init("fli-test".to_owned());
-    fli.option("hello".to_owned(), |app| {
+    let mut fli = Fli::init("fli-test", "cook");
+    fli.option("hello", "testing" , |app| {
         println!("Hello, World!");
-        assert!(app.is_passed("hello".to_owned()));
+        assert!(app.is_passed("hello".to_string()));
     });
     fli.run();
     assert!(!fli.is_passed("test".to_owned()));
@@ -21,10 +21,10 @@ fn test_fli() {
 
 #[test]
 fn test_get_callable_name_method(){
-    let mut fli = Fli::init("fli-test".to_owned());
-    fli.option("-n --name".to_owned(), |_app| {});
-    fli.option("-g --greet, <>".to_owned(), |_app| {});
-    fli.option("-t --time, []".to_owned(), |_app| {});
+    let mut fli = Fli::init("fli-test", "cook");
+    fli.option("-n --name", "testing", |_app| {});
+    fli.option("-g --greet, <>","testing",  |_app| {});
+    fli.option("-t --time, []", "testing", |_app| {});
     fli.run();
     // if passed short name should return long name
     assert_eq!(fli.get_callable_name("-n".to_string()), "--name");
