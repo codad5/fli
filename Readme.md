@@ -5,7 +5,7 @@ A library for creating commnad line apps in rust
 ```rust
 fn main(){
     let mut app : &Fli = Fli::init("my app");
-    app.option("-n --name <>", |x : &Fli| {});
+    app.option("-n --name, <>", |x : &Fli| {});
     app.option("-g --greet", |x : &Fli| {
         match x.get_values("--name".to_owned()){
             Ok(option) => {
@@ -119,4 +119,10 @@ fn main(){
 > All `app : Fli` methods are avaliable as `app : &Fli` methods
 - `app.option(arg_and_data, callback)` : 
 This method takes in 2 param 
-  - First `arg_and_data` : This is a format template of how the avaliable arguments for a command would be being in a format `-a --arg` or `-a --arg, data`
+  - First `arg_and_data` : This is a format template of how the avaliable arguments for a command would be being in a format `-a --arg` or `-a --arg, data` where `-a` is the short  form of the argument and `--arg` is the long form of the argument. `--data` is the acceptable data type, if not passed then the arg does not need a data type
+  |---|---|
+  | [] | This means it needs one optional data|
+  | <> | This means it needs one required data |
+  | [...] | This means it can take in many optional data |
+  | <...> | This means it needs at least one data, can take more |
+
