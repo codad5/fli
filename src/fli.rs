@@ -9,11 +9,6 @@ pub struct Fli {
     cammands_hash_tables : HashMap<String, Fli>
 }
 
-enum FliError{
-    InvalidArg(String),
-    EmptyParam(String)
-}
-
 impl Fli {
     pub fn init(name : String) -> Self {
         println!("{:?}", env::args());
@@ -73,7 +68,7 @@ impl Fli {
     }
     pub fn run(&self)  {
         let mut callbacks: Vec<for<'a> fn(&'a Fli)> = vec![];
-        let mut counter: usize = 0;
+        let mut _counter: usize = 0;
         for mut arg in self.args.clone()
         {
             // a value based param must start with a - either -- or -
@@ -108,7 +103,7 @@ impl Fli {
                     break;
                 }
             }
-            counter += 1;
+            _counter += 1;
         }
         self.run_callbacks(callbacks);
     }
@@ -151,10 +146,10 @@ impl Fli {
         }
         return arg_template;
     }
-    pub fn get_values(&self, arg: String) -> Result<Option<Vec<String>>, &str>
+    pub fn get_values(&self, arg: String) -> Result<Vec<String>, &str>
     {
         let mut values : Vec<String> = vec![];
-        let mut arg_name: String = self.get_callable_name(arg);
+        let arg_name: String = self.get_callable_name(arg);
         // if the argument does not need a param then dont return none
         if let Some(_) = self.args_hash_table.get(&arg_name){
             return Err("Does not expect a value");
@@ -218,9 +213,9 @@ impl Fli {
           counter += 1;
         }
         if values.len() > 0{
-            return Ok(Some(values));
+            return Ok(values);
         }
-        return Ok(None);
+        return Err("No value passed");
     }
     pub fn is_passed(&self, param : String) -> bool
     {

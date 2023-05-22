@@ -9,7 +9,7 @@ fn test_add() {
 
 #[test]
 fn test_fli() {
-    let mut fli = Fli::init();
+    let mut fli = Fli::init("fli-test".to_owned());
     fli.option("hello".to_owned(), |app| {
         println!("Hello, World!");
         assert!(app.is_passed("hello".to_owned()));
