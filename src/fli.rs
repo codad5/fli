@@ -1,5 +1,5 @@
 
-use std::{env, collections::HashMap, process};
+use std::{env, collections::HashMap, process, ops::Index};
 
 pub struct Fli {
     name:String,
@@ -100,7 +100,9 @@ impl Fli {
     pub fn run(&self)  {
         let mut callbacks: Vec<for<'a> fn(&'a Fli)> = vec![];
         let mut _counter: usize = 0;
-        for mut arg in self.args.clone()
+        let mut init_arg = self.args.clone();
+        init_arg.remove(0); // remove the app runner / command
+        for mut arg in init_arg
         {
             // a value based param must start with a - either -- or -
             if arg.starts_with("-") {
@@ -122,19 +124,24 @@ impl Fli {
                         // make sure a value is passed in else it should show error/help
                         if !self.has_a_value(arg.trim().to_string())
                         {
-                            self.print_help(&format!("Why Invalid syntax : {arg}  does not have a value"))
+                            self.print_help(&format!("Invalid syntax : {arg}  does not have a value"))
                         }
                         callbacks.push(*callback);
                     }
                 }
+                break;
             }
             else{
                 if let Some(command_struct) = self.cammands_hash_tables.get(arg.trim()){
                     command_struct.run();
+                    callbacks.push(|x|{});
                     break;
                 }
             }
             _counter += 1;
+        }
+        if callbacks.len() == 0{
+            self.print_help("Invalid Command Used");
         }
         self.run_callbacks(callbacks);
     }
