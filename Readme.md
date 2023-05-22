@@ -120,6 +120,7 @@ fn main(){
 - `app.option(arg_and_data, callback)` : 
 This method takes in 2 param 
   - First `arg_and_data` : This is a format template of how the avaliable arguments for a command would be being in a format `-a --arg` or `-a --arg, data` where `-a` is the short  form of the argument and `--arg` is the long form of the argument. `--data` is the acceptable data type and it is seperated by a **comma** `,` , if not passed then the arg does not need a data type
+  
   | symbol | meaning |
   |:---:|:---|
   | [] | This means it needs one optional data|
