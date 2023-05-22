@@ -224,7 +224,12 @@ impl Fli {
     }
     pub fn is_passed(&self, param : String) -> bool
     {
-        return self.args.contains(&param);
+        for i in self.args.clone(){
+            if self.get_callable_name(i) == self.get_callable_name(param.clone()){
+                return true;
+            }
+        }
+        return false;
     }
 }
 
