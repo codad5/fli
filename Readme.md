@@ -33,7 +33,12 @@ Good day james
 ## Getting started
 ### Installtion
 ```bash
-coming soon
+cargo add fli
+```
+OR
+```toml
+[dependencies]
+fli = "0.0.1"
 ```
 
 ### Import
