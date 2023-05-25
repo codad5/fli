@@ -3,9 +3,9 @@
 A library for creating command line apps in rust inspired by the like of [commander.js](https://github.com/tj/commander.js)
 
 ## Changes
-For stable changes check the [CHANGELOG.md](https://codad5/fil/blob/master/CHANGELOG.md) file
+For stable changes check the [CHANGELOG.md](https://github.com/codad5/fil/blob/master/CHANGELOG.md) file
 
-For unstable changes check the [CHANGELOG.md](https://codad5/fil/blob/dev/CHANGELOG.md) file
+For unstable changes check the [CHANGELOG.md](https://github.com/codad5/fil/blob/dev/CHANGELOG.md) file
 
 ```rust
 fn main(){
