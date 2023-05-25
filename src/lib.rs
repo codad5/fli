@@ -1,5 +1,5 @@
 pub mod fli;
-pub use fli::*;
+pub use self::fli::*;
 
 #[cfg(test)]
 mod tests {
