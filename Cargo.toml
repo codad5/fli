@@ -1,0 +1,18 @@
+[package]
+name = "fli"
+description = "A good way of building a CLI app in Rust"
+version = "0.0.2"
+edition = "2021"
+license = "MIT"
+homepage = "https://github.com/codad5/fli"
+repository = "https://github.com/codad5/fli"
+documentation = "https://docs.rs/fli"
+readme = "README.md"
+authors = ["Chibueze Aniezeofor (codad5) <aniezeoformic@gmail.com>"]
+categories = ["cli", "rust", "cli-library", "development-tools::cargo-plugins"]
+keywords = ["cli", "cli-library", "fli", "command-line", "command-line-tool"]
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
