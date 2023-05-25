@@ -1,7 +1,7 @@
 [package]
 name = "fli"
 description = "A good way of building a CLI app in Rust"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/codad5/fli"
@@ -10,7 +10,7 @@ documentation = "https://docs.rs/fli"
 readme = "README.md"
 authors = ["Chibueze Aniezeofor (codad5) <aniezeoformic@gmail.com"]
 categories = ["cli", "rust", "cli-library", "development-tools::cargo-plugins"]
-keywords = ["cli", "rust", "cli-library", "fli", "command-line", "command-line-interface", "command-line-tool", "command-line-app", "command-line-parser", "command-line-arguments", "command-line-argument-parser", "command-line-argument-parsing", "command-line-argument-parsing-library", "command-line-argument-parsing-tool", "command-line-argument-parsing-app", "command-line-argument-parsing-parser", "command-line-argument-parsing-arguments", "command-line-argument-parsing-argument-parser", "command-line-argument-parsing-argument-parsing", "command-line-argument-parsing-argument-parsing-library", "command-line-argument-parsing-argument-parsing-tool", "command-line-argument-parsing-argument-parsing-app", "command-line-argument-parsing-argument-parsing-parser", "command-line-argument-parsing-argument-parsing-arguments", "command-line-argument-parsing-argument-parsing-argument-parser", "command-line-argument-parsing-argument-parsing-argument-parsing"]
+keywords = ["cli", "cli-library", "fli", "command-line", "command-line-interface"]
 
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
