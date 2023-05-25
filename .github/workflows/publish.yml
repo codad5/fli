@@ -23,4 +23,4 @@ jobs:
         run: cargo build --verbose && cargo test --verbose
 
       - name: Publish to Crates.io
-        run: cargo login YOUR_CARGO_TOKEN && cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+        run: cargo login YOUR_CARGO_TOKEN && cargo publish --token ${{ secrets.CRATES_TOKEN }}
