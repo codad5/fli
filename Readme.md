@@ -1,6 +1,6 @@
 # FLI
 
-A library for creating commnad line apps in rust inspired by the like of [commander.js](https://github.com/tj/commander.js)
+A library for creating command line apps in rust inspired by the like of [commander.js](https://github.com/tj/commander.js)
 
 ## Changes
 For stable changes check the [CHANGELOG.md](https://codad5/fil/blob/master/CHANGELOG.md) file
