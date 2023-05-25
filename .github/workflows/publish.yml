@@ -3,7 +3,7 @@ name: Publish Crate
 on:
   push:
     branches:
-      - main  # Replace with the branch you want to trigger the workflow on
+      - master
 
 jobs:
   build:
