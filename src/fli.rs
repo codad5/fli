@@ -1,5 +1,5 @@
 
-use std::{env, collections::HashMap, process, ops::Index};
+use std::{env, collections::HashMap, process};
 
 pub struct Fli {
     name:String,
@@ -134,7 +134,7 @@ impl Fli {
             else{
                 if let Some(command_struct) = self.cammands_hash_tables.get(arg.trim()){
                     command_struct.run();
-                    callbacks.push(|x|{});
+                    callbacks.push(|_x|{});
                     break;
                 }
             }
