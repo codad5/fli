@@ -1,7 +1,7 @@
 [package]
 name = "fli"
 description = "A good way of building a CLI app in Rust"
-version = "0.0.4"
+version = "0.0.3"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/codad5/fli"
