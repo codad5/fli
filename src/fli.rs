@@ -49,24 +49,24 @@ impl Fli {
         self.option("-h --help", &format!("print help screen for {}", self.name), |x|{x.default_help()});
     }
     pub fn print_help(&self, message : &str){
-        println!("{}", "ERROR================================".bold().red());
-        println!("{}", message.bright_red());
-        println!("{}", "================================".bold().red());
+        println!("{0: <1} {1}", "", "ERROR================================".bold().red());
+        println!("{0: <5} {1}", "", message.bright_red());
+        println!("{0: <1} {1}", "", "================================".bold().red());
         self.default_help();
         process::exit(0);
     }
     fn default_help(&self){
-        println!("{}: {}", "Name".bold().green(), self.name);
-        println!("{}: {}", "Description".bold().blue(), self.description);
-        println!("{}: {} [options|commands]", "Usage".bold().yellow(), self.name);
+        println!("{0: <1} {1}: {2}", "", "Name".bold().green(), self.name);
+        println!("{0: <1} {1}: {2}", "", "Description".bold().blue(), self.description);
+        println!("{0: <1} {1}: {2} [options|commands]", "", "Usage".bold().yellow(), self.name);
         self.print_options();
         self.print_commands();
         process::exit(0);
         
     }
     fn print_options(&self){
-        println!("{}", "Options:".bold().blue());
-        println!("{0: <12} | {1: <10} | {2: <10} | {3: <10}" ,"Long".bold().blue(), "Short".bold().green(), "ParamType", "Description".bold().yellow());
+        println!("{0: <1} {1}", "", "Options:".bold().blue());
+        println!("{0: <2}  {1: <12} | {2: <10} | {3: <10} | {4: <10}" ,"", "Long".bold().blue(), "Short".bold().green(), "ParamType", "Description".bold().yellow());
         for key in self.help_hash_table.keys(){
             // if a command skip
             if self.cammands_hash_tables.contains_key(key) {
@@ -91,20 +91,20 @@ impl Fli {
                 if let Some(long_key) = key.split(" ").collect::<Vec<&str>>().get(1){
                     long = String::from(long_key.to_owned());
                 }
-                println!("{0: <12} | {1: <10} | {2: <10} | {3: <10}", long.blue(), short.green(), param_type, description.yellow());
+                println!("{0: <2}  {1: <12} | {2: <10} | {3: <10} | {4: <10}", "", long.blue(), short.green(), param_type, description.yellow());
             }
         }
     }
     fn print_commands(&self){
-        println!("{}", "Commands:".bold().blue());
-        println!("{0: <12} | {1: <10}" ,"Name".bold().blue(), "Description".bold().yellow());
+        println!("{0: <1} {1}", "", "Commands:".bold().blue());
+        println!("{0: <2} {1: <12} | {2: <10}" , "", "Name".bold().blue(), "Description".bold().yellow());
         for key in self.help_hash_table.keys(){
             // if a command skip
             if !self.cammands_hash_tables.contains_key(key) {
                 continue;
             }
             if let Some(description) = self.help_hash_table.get(key){
-                println!("{0: <12} | {1: <10}", key.blue(), description.yellow());
+                println!("{0: <2} {1: <12} | {2: <10}" , "", key.blue(), description.yellow());
             }
         }
     }
