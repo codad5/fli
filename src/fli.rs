@@ -1,4 +1,4 @@
-
+use colored::Colorize;
 use std::{env, collections::HashMap, process};
 
 pub struct Fli {
@@ -22,7 +22,7 @@ impl Fli {
             cammands_hash_tables: HashMap::new(),
             help_hash_table:HashMap::new()
         };
-        app.option("-h --help", &format!("print help screen for {}", app.name), |x|{x.default_help()});
+        app.add_help_option();
         return app;
     }
     pub fn command(&mut self, name: &str, description : &str) -> &mut Fli
@@ -39,30 +39,76 @@ impl Fli {
             cammands_hash_tables: HashMap::new(),
             help_hash_table:HashMap::new()
         };
-        new_fli.option("-h --help", &format!("print help screen for {}", new_fli.name), |x|{x.default_help()});
+        new_fli.add_help_option();
         self.cammands_hash_tables.insert(name.to_string(), new_fli);
         self.help_hash_table.insert(name.to_string(), description.to_string());
         return self.cammands_hash_tables.get_mut(&name.to_string()).unwrap();
     }
+
+    fn add_help_option(&mut self){
+        self.option("-h --help", &format!("print help screen for {}", self.name), |x|{x.default_help()});
+    }
     pub fn print_help(&self, message : &str){
-        println!("ERROR ================================");
-        println!("{message}");
-        println!("================================");
+        println!("{0: <1} {1}", "", "ERROR================================".bold().red());
+        println!("{0: <5} {1}", "", message.bright_red());
+        println!("{0: <1} {1}", "", "================================".bold().red());
         self.default_help();
         process::exit(0);
     }
     fn default_help(&self){
-        println!("Name: {}", self.name);
-        println!("Description {}", self.description);
-        println!("Commands and Options");
+        println!("{0: <1} {1}: {2}", "", "Name".bold().green(), self.name);
+        println!("{0: <1} {1}: {2}", "", "Description".bold().blue(), self.description);
+        println!("{0: <1} {1}: {2} [options|commands]", "", "Usage".bold().yellow(), self.name);
+        self.print_options();
+        self.print_commands();
+        process::exit(0);
+        
+    }
+    fn print_options(&self){
+        println!("{0: <1} {1}", "", "Options:".bold().blue());
+        println!("{0: <2}  {1: <12} | {2: <10} | {3: <10} | {4: <10}" ,"", "Long".bold().blue(), "Short".bold().green(), "ParamType", "Description".bold().yellow());
         for key in self.help_hash_table.keys(){
+            // if a command skip
+            if self.cammands_hash_tables.contains_key(key) {
+                continue;
+            }
             if let Some(description) = self.help_hash_table.get(key){
-                let mut key = key.clone();
-                key.shrink_to(12);
-                println!(" . {}   : {description}", key);
+                let mut short = String::new();
+                if let Some(short_key) = key.split(" ").collect::<Vec<&str>>().get(0){
+                    short = short_key.to_string();
+                }
+                let mut param_type = String::new();
+                if let Some(param_d) = key.split(" ").collect::<Vec<&str>>().get(2){
+                    param_type = match param_d.trim() {
+                        "<>" => "Required",
+                        "[]" => "Optional",
+                        "<...>" => "Required Multiple",
+                        "[...]" => "Optional Multiple",
+                        _ => "None"
+                    }.to_string();
+                }
+                let mut long = String::new();
+                if let Some(long_key) = key.split(" ").collect::<Vec<&str>>().get(1){
+                    long = String::from(long_key.to_owned());
+                }
+                println!("{0: <2}  {1: <12} | {2: <10} | {3: <10} | {4: <10}", "", long.blue(), short.green(), param_type, description.yellow());
             }
         }
     }
+    fn print_commands(&self){
+        println!("{0: <1} {1}", "", "Commands:".bold().blue());
+        println!("{0: <2} {1: <12} | {2: <10}" , "", "Name".bold().blue(), "Description".bold().yellow());
+        for key in self.help_hash_table.keys(){
+            // if a command skip
+            if !self.cammands_hash_tables.contains_key(key) {
+                continue;
+            }
+            if let Some(description) = self.help_hash_table.get(key){
+                println!("{0: <2} {1: <12} | {2: <10}" , "", key.blue(), description.yellow());
+            }
+        }
+    }
+    
     pub fn option(&mut self, key: &str, description : &str, value: fn(app : &Self)) -> &Fli{
         let args : Vec<&str> = key.split(",").collect();
         let mut options = String::new();
