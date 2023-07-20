@@ -1,6 +1,8 @@
 use colored::Colorize;
 use std::{env, collections::HashMap, process};
 
+
+// This is the main struct that holds all the data
 pub struct Fli {
     name:String,
     description: String,
@@ -8,7 +10,8 @@ pub struct Fli {
     pub args_hash_table: HashMap<String, fn(app : &Self)>,
     short_hash_table : HashMap<String, String>,
     cammands_hash_tables : HashMap<String, Fli>,
-    help_hash_table : HashMap<String, String>
+    help_hash_table : HashMap<String, String>,
+    default_callback : fn(app : &Self)
 }
 
 impl Fli {
@@ -20,7 +23,8 @@ impl Fli {
             args_hash_table: HashMap::new(),
             short_hash_table: HashMap::new(),
             cammands_hash_tables: HashMap::new(),
-            help_hash_table:HashMap::new()
+            help_hash_table:HashMap::new(),
+            default_callback: |x|{x.print_help("No command passed")}
         };
         app.add_help_option();
         return app;
@@ -29,7 +33,6 @@ impl Fli {
     {
         let mut args = self.args.clone();
         args.remove(0);
-        println!("args: {:?}", args);
         let mut new_fli = Self {
             name:name.to_string(),
             description: description.to_string(),
@@ -37,7 +40,8 @@ impl Fli {
             args_hash_table: HashMap::new(),
             short_hash_table: HashMap::new(),
             cammands_hash_tables: HashMap::new(),
-            help_hash_table:HashMap::new()
+            help_hash_table:HashMap::new(),
+            default_callback: |x|{x.print_help("No command passed")}
         };
         new_fli.add_help_option();
         self.cammands_hash_tables.insert(name.to_string(), new_fli);
@@ -107,6 +111,10 @@ impl Fli {
                 println!("{0: <2} {1: <12} | {2: <10}" , "", key.blue(), description.yellow());
             }
         }
+    }
+    pub fn default(&mut self, callback : fn(app : &Self)) -> &Fli{
+        self.default_callback = callback;
+        return self;
     }
     
     pub fn option(&mut self, key: &str, description : &str, value: fn(app : &Self)) -> &Fli{
@@ -186,11 +194,12 @@ impl Fli {
             }
             _counter += 1;
         }
-        if callbacks.len() == 0{
-            self.print_help("Invalid Command Used");
-        }
+       if callbacks.len() == 0 {
+           callbacks.push(self.default_callback);
+       }
         self.run_callbacks(callbacks);
     }
+
     fn has_a_value(&self, arg_name : String) -> bool
     {
         let mut counter = 0;
@@ -209,6 +218,7 @@ impl Fli {
         }
         return false;
     }
+
     fn run_callbacks(&self, callbacks : Vec<for<'a> fn(&'a Fli)>)
     {
         for callback in callbacks.clone()
@@ -312,6 +322,13 @@ impl Fli {
             }
         }
         return false;
+    }
+    pub fn get_arg_at(&self, index : usize) -> Option<String>
+    {
+        if let Some(arg) = self.args.get(index){
+            return Some(arg.to_string());
+        }
+        return None;
     }
 }
 
