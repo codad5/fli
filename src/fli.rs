@@ -1,6 +1,8 @@
 use colored::Colorize;
 use std::{env, collections::HashMap, process};
 
+
+// This is the main struct that holds all the data
 pub struct Fli {
     name:String,
     description: String,
