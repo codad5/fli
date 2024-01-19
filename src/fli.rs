@@ -1,5 +1,5 @@
 use colored::Colorize;
-use std::{env, collections::HashMap, process};
+use std::{env, collections::HashMap, process, default};
 
 
 // This is the main struct that holds all the data
@@ -11,7 +11,9 @@ pub struct Fli {
     short_hash_table : HashMap<String, String>,
     cammands_hash_tables : HashMap<String, Fli>,
     help_hash_table : HashMap<String, String>,
-    default_callback : fn(app : &Self)
+    default_callback : fn(app : &Self), 
+    allow_duplicate_callback : bool,
+    allow_inital_no_param_values : bool
 }
 
 impl Fli {
@@ -24,7 +26,9 @@ impl Fli {
             short_hash_table: HashMap::new(),
             cammands_hash_tables: HashMap::new(),
             help_hash_table:HashMap::new(),
-            default_callback: |x|{x.print_help("No command passed")}
+            default_callback: |x|{x.print_help("No command or args passed")}, 
+            allow_duplicate_callback : false, 
+            allow_inital_no_param_values : false
         };
         app.add_help_option();
         return app;
@@ -41,12 +45,26 @@ impl Fli {
             short_hash_table: HashMap::new(),
             cammands_hash_tables: HashMap::new(),
             help_hash_table:HashMap::new(),
-            default_callback: |x|{x.print_help("No command passed")}
+            default_callback: |x|{x.print_help("No command or args passed")}, 
+            allow_duplicate_callback: self.allow_duplicate_callback,
+            allow_inital_no_param_values: self.allow_inital_no_param_values
         };
         new_fli.add_help_option();
         self.cammands_hash_tables.insert(name.to_string(), new_fli);
         self.help_hash_table.insert(name.to_string(), description.to_string());
         return self.cammands_hash_tables.get_mut(&name.to_string()).unwrap();
+    }
+
+    pub fn allow_duplicate_callback(&mut self, data: bool) -> &mut Self
+    {
+        self.allow_duplicate_callback = data;
+        self
+    }
+
+    pub fn allow_inital_no_param_values(&mut self, data: bool) -> &mut Self
+    {
+        self.allow_inital_no_param_values = data;
+        self
     }
 
     fn add_help_option(&mut self){
@@ -112,12 +130,12 @@ impl Fli {
             }
         }
     }
-    pub fn default(&mut self, callback : fn(app : &Self)) -> &Fli{
+    pub fn default(&mut self, callback : fn(app : &Self)) -> &mut Self{
         self.default_callback = callback;
         return self;
     }
     
-    pub fn option(&mut self, key: &str, description : &str, value: fn(app : &Self)) -> &Fli{
+    pub fn option(&mut self, key: &str, description : &str, value: fn(app : &Self)) -> &mut Self{
         let args : Vec<&str> = key.split(",").collect();
         let mut options = String::new();
         if let Some(opts)  = args.get(0){
@@ -151,53 +169,70 @@ impl Fli {
         }
         return None;
     }
-    pub fn run(&self)  {
+    pub fn run(&self)  -> &Fli {
         let mut callbacks: Vec<for<'a> fn(&'a Fli)> = vec![];
-        let mut _counter: usize = 0;
         let mut init_arg = self.args.clone();
+        let default_callback : fn(&Fli) = |x : &Fli|{
+            x.print_help("Invalid Arg");
+        };
         init_arg.remove(0); // remove the app runner / command
-        for mut arg in init_arg
+        for _arg in init_arg
         {
-            // a value based param must start with a - either -- or -
-            if arg.starts_with("-") {
-                arg = self.get_callable_name(arg);
-                for optional_template in ["", "[]", "[...]"]
-                {
-                    // check if it need a required param
-                    let find = &String::from(format!("{arg} {optional_template}"));
-                    if let Some(callback) = self.args_hash_table.get(find.trim()){
-                        callbacks.push(*callback);
-                        // continue;
-                    }
-                }
-                for required_template in ["<>", "<...>"]
-                {
-                    // check if it need a required param
-                    let find = &String::from(format!("{arg} {required_template}"));
-                    if let Some(callback) = self.args_hash_table.get(find.trim()){
-                        // make sure a value is passed in else it should show error/help
-                        if !self.has_a_value(arg.trim().to_string())
-                        {
-                            self.print_help(&format!("Invalid syntax : {arg}  does not have a value"))
-                        }
-                        callbacks.push(*callback);
-                    }
-                }
-                break;
-            }
-            else{
+            let mut arg = _arg;
+            let mut current_callback = default_callback; 
+
+            if !arg.starts_with("-") {
                 if let Some(command_struct) = self.cammands_hash_tables.get(arg.trim()){
-                    command_struct.run();
-                    callbacks.push(|_x|{});
-                    break;
+                    return command_struct.run();
                 }
+                if self.allow_inital_no_param_values  {
+                    current_callback = self.default_callback
+                }
+                continue;
             }
-            _counter += 1;
+            arg = self.get_callable_name(arg);
+            for optional_template in ["", "[]", "[...]"]
+            {
+                // check if it need a required param
+                let find = &String::from(format!("{arg} {optional_template}"));
+                let callback_find = self.args_hash_table.get(find.trim());
+                if callback_find.is_none() {
+                    continue;
+                }
+                current_callback = *callback_find.unwrap();
+            }
+            for required_template in ["<>", "<...>"]
+            {
+                // check if it need a required param
+                let find = &String::from(format!("{arg} {required_template}"));
+                let callback_find =  self.args_hash_table.get(find.trim());
+                if callback_find.is_none() {
+                    continue;
+                }
+                // make sure a value is passed in else it should show error/help
+                if !self.has_a_value(arg.trim().to_string())
+                {
+                    self.print_help(&format!("Invalid syntax : {arg}  does not have a value"));
+                    current_callback = |_x: &Fli| {};
+                    return self;
+                }
+                current_callback = *(callback_find.unwrap());
+                
+            }
+
+            if current_callback == default_callback {
+                callbacks = Vec::new();
+                // break;
+            }
+
+            if !callbacks.contains(&current_callback) || self.allow_duplicate_callback {
+                callbacks.push(current_callback)
+            }
         }
        if callbacks.len() == 0 {
            callbacks.push(self.default_callback);
        }
-        self.run_callbacks(callbacks);
+       self.run_callbacks(callbacks)
     }
 
     fn has_a_value(&self, arg_name : String) -> bool
@@ -219,12 +254,13 @@ impl Fli {
         return false;
     }
 
-    fn run_callbacks(&self, callbacks : Vec<for<'a> fn(&'a Fli)>)
+    fn run_callbacks(&self, callbacks : Vec<for<'a> fn(&'a Fli)>) -> &Self
     {
         for callback in callbacks.clone()
         {
             callback(self)
         }
+        self
     }
     /**
      * Gets the Long name for a short arg
