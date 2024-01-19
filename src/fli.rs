@@ -1,5 +1,5 @@
 use colored::Colorize;
-use std::{env, collections::HashMap, process, default};
+use std::{env, collections::HashMap, process};
 
 
 // This is the main struct that holds all the data
@@ -185,9 +185,6 @@ impl Fli {
                 if let Some(command_struct) = self.cammands_hash_tables.get(arg.trim()){
                     return command_struct.run();
                 }
-                if self.allow_inital_no_param_values  {
-                    current_callback = self.default_callback
-                }
                 continue;
             }
             arg = self.get_callable_name(arg);
@@ -213,7 +210,6 @@ impl Fli {
                 if !self.has_a_value(arg.trim().to_string())
                 {
                     self.print_help(&format!("Invalid syntax : {arg}  does not have a value"));
-                    current_callback = |_x: &Fli| {};
                     return self;
                 }
                 current_callback = *(callback_find.unwrap());

@@ -4,7 +4,7 @@ use fli::Fli;
 // Example: fli-[feature] [add a new feature]
 fn main() {
     let mut app = Fli::init("Apper", "An app that does many things");
-     app.option("-l --list-apps", "To list all app", |x|{
+     app.option("-l --list-apps", "To list all app", |_|{
         let mut app_list: Vec<[&str;2]> = Vec::new();
         app_list.push(["greeter", "To Greet"]);
         app_list.push(["repeater", "to repeatedly say something"]);
@@ -56,7 +56,7 @@ fn repeater(x: &Fli)
         Err(_) => "5".to_string()
     };
     let time = time.parse::<u8>().unwrap();
-    for i in 0..time{
+    for _ in 0..time{
         println!("{message}");
     }
 
