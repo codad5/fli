@@ -235,7 +235,7 @@ impl Fli {
        self.run_callbacks(callbacks)
     }
 
-    fn has_a_value(&self, arg_name : String) -> bool
+    pub fn has_a_value(&self, arg_name : String) -> bool
     {
         let mut counter = 0;
         let binding = self.get_callable_name(arg_name);
@@ -359,9 +359,9 @@ impl Fli {
         }
         return false;
     }
-    pub fn get_arg_at(&self, index : usize) -> Option<String>
+    pub fn get_arg_at(&self, index : u8) -> Option<String>
     {
-        if let Some(arg) = self.args.get(index){
+        if let Some(arg) = self.args.get(index as usize) {
             return Some(arg.to_string());
         }
         return None;
