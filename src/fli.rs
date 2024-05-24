@@ -3,21 +3,59 @@ use std::{collections::HashMap, env, process};
 
 use crate::{fli_default_callback, levenshtein_distance};
 
-// This is the main struct that holds all the data
+/// This is the main struct that holds all the data
+///
+/// # Example
+/// ```rust
+/// let mut app : Fli = Fli::init("name", "a sample app");
+/// app.option("-n --name", "The name of the user", |x| {
+///    let name = x.get_values("-n".to_string());
+///    if !name.is_err() {
+///     println!("Hello {}", name.unwrap().get(0));
+///    }
+/// });
+/// ```
+///
 pub struct Fli {
+    /// The name of the app
     name: String,
+    // The description of the app
     description: String,
+    /// The arguments passed to the app (for example :
+    /// ```rust
+    ///  env::args().collect()
+    /// ```
     args: Vec<String>,
+    /// The hash table for the arguments where the key is the argument name and the value is the callback function
     pub args_hash_table: HashMap<String, fn(app: &Self)>,
+    /// The hash table for the short arguments where the key is the short argument name and the value is the long argument name
     short_hash_table: HashMap<String, String>,
+    /// The hash table for the commands where the key is the command name and the value is the Fli struct holding the command data
     cammands_hash_tables: HashMap<String, Fli>,
+    /// The hash table for the help where the key is the argument name and the value is the description of the argument
     help_hash_table: HashMap<String, String>,
+    /// The default callback function to run when no argument is passed
+    /// on default it prints the help screen with an error message and most similar commands if any command was passed but not found/ part of the commands
     default_callback: fn(app: &Self),
+    /// A boolean to allow duplicate callback
     allow_duplicate_callback: bool,
+    /// A boolean to allow initial no param values
     allow_inital_no_param_values: bool,
 }
 
 impl Fli {
+    /// Initializes the Fli struct with the name and description
+    /// # Arguments
+    /// * `name` - The name of the app
+    /// * `description` - The description of the app
+    /// 
+    /// # Example
+    /// ```rust
+    /// let mut app : Fli = Fli::init("name", "a sample app");
+    /// ```
+    /// 
+    /// # Returns
+    /// * `Fli` - The Fli struct
     pub fn init(name: &str, description: &str) -> Self {
         let mut app = Self {
             name: name.to_string(),
@@ -34,6 +72,39 @@ impl Fli {
         app.add_help_option();
         return app;
     }
+
+    /// Creates a new command
+    /// # Arguments
+    /// * `name` - The name of the command
+    /// * `description` - The description of the command
+    /// 
+    /// # Example
+    /// ```rust
+    /// let mut app : Fli = Fli::init("name", "a sample app");
+    /// app.command("greet", "An app that respects")
+    ///    .default(greet)
+    ///    .allow_inital_no_param_values(false)
+    ///    .option("-n --name, <>", "To print your name along side", greet)
+    ///    .option("-t --time, []", "For time based Greeting", greet);
+    /// 
+    /// fn greet(x: &Fli) {
+    ///    let name: String = match x.get_values("-n".to_string()) {
+    ///       Ok(values) => values.get(0).unwrap().to_owned(),
+    ///       Err(_) => String::new(),
+    ///   };
+    ///   let time: String = match x.get_values("-t".to_string()) {
+    ///     Ok(values) => values.get(0).unwrap().to_owned(),
+    ///     Err(_) => String::from("Hello"),
+    ///   };
+    ///   let time_saying: String = match time {
+    ///      _ => String::from("Hello"),
+    ///   };
+    ///   println!("{time_saying} {name}")
+    /// }
+    /// ```
+    /// 
+    /// # Returns
+    /// * `&mut Fli` - The Fli struct   
     pub fn command(&mut self, name: &str, description: &str) -> &mut Fli {
         let mut args = self.args.clone();
         args.remove(0);
@@ -59,11 +130,36 @@ impl Fli {
             .unwrap();
     }
 
+    /// Allows duplicate callback
+    /// # Arguments
+    /// * `data` - A boolean to allow duplicate callback
+    /// 
+    /// # Example
+    /// ```rust
+    /// let mut app : Fli = Fli::init("name", "a sample app");
+    /// app.allow_duplicate_callback(true);
+    ///
+    /// ```
+    /// 
+    /// # Returns
+    /// * `&mut Fli` - The Fli struct
     pub fn allow_duplicate_callback(&mut self, data: bool) -> &mut Self {
         self.allow_duplicate_callback = data;
         self
     }
 
+    /// Allows initial no param values
+    /// # Arguments
+    /// * `data` - A boolean to allow initial no param values
+    /// 
+    /// # Example
+    /// ```rust
+    /// app.allow_inital_no_param_values(true);
+    /// ```
+    /// 
+    /// # Returns
+    /// * `&mut Fli` - The Fli struct
+    /// 
     pub fn allow_inital_no_param_values(&mut self, data: bool) -> &mut Self {
         self.allow_inital_no_param_values = data;
         self
@@ -115,7 +211,7 @@ impl Fli {
         if similar_commands.len() > 0 {
             println!("{0: <1} {1}", "", "Did you mean:".bold().red());
             for i in similar_commands {
-                //  give about 2 tap space then a bullet point before showing the similar command 
+                //  give about 2 tap space then a bullet point before showing the similar command
                 println!("{0: <4} {1} {2}", "   ", "•".bold().red(), i.bold());
             }
         }
