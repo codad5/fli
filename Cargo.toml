@@ -1,6 +1,6 @@
 [package]
 name = "fli"
-description = "The commander.js like Cli Parser for rust"
+description = "The commander.js like CLI Parser for rust"
 version = "0.0.6"
 edition = "2021"
 license = "MIT"
@@ -9,11 +9,14 @@ repository = "https://github.com/codad5/fli"
 documentation = "https://docs.rs/fli"
 readme = "README.md"
 authors = ["Chibueze Aniezeofor (codad5) <aniezeoformic@gmail.com>"]
-categories = ["cli", "cli-parser", "parser", "rust", "javascript", "cli-library", "development-tools::cargo-plugins"]
+categories = [
+    "command-line-utilities",
+    "parsing",
+    "development-tools::cargo-plugins",
+    "text-processing",
+    "utilities"
+]
 keywords = ["cli", "cli-parser", "parser", "clap", "fli"]
-
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 colored = "2.0.4"
