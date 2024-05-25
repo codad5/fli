@@ -66,7 +66,7 @@ fn main(){
 
 ```rust
 fn main(){
-    let mut app = Fli::init_from_toml();
+    let mut app = Fli::init("app-name", "an app description");
 }
 ```
 
