@@ -51,6 +51,21 @@ impl Fli {
         self.name.to_owned()
     }
 
+    /// To init app from toml file, getting the name and 
+    /// 
+    /// # Example
+    /// ```rust
+    /// let mut app : Fli = Fli::init_from_toml();
+    /// ```
+    /// 
+    /// # Returns
+    /// * `Fli` - The Fli struct
+    pub fn init_from_toml() -> Self {
+        let name = env::var("CARGO_PKG_NAME").unwrap();
+        let description = env::var("CARGO_PKG_DESCRIPTION").unwrap();
+        return Self::init(name.as_str(), description.as_str());
+    }
+
     /// Initializes the Fli struct with the name and description
     /// # Arguments
     /// * `name` - The name of the app
