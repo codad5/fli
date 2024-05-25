@@ -44,6 +44,13 @@ pub struct Fli {
 }
 
 impl Fli {
+
+    /// for getting app name 
+    /// 
+    pub fn get_app_name(&self) -> String {
+        self.name.to_owned()
+    }
+
     /// Initializes the Fli struct with the name and description
     /// # Arguments
     /// * `name` - The name of the app
@@ -165,6 +172,8 @@ impl Fli {
         self
     }
 
+
+    /// Adds a help option to the app
     fn add_help_option(&mut self) {
         self.option(
             "-h --help",
@@ -172,6 +181,8 @@ impl Fli {
             |x| x.default_help(),
         );
     }
+
+    /// 
     pub fn print_help(&self, message: &str) {
         println!(
             "{0: <1} {1}",

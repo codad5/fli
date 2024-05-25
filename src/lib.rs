@@ -54,8 +54,8 @@ fn fli_default_callback(x: &Fli) {
     };
     //  if command is not empty print similar command
     if !command.is_empty() {
+        println!("invalid {0} Command , use the '-h' or '--help' flag to see all command", x.get_app_name());
         println!("Command not found: {}", command.bold().red());
         x.print_most_similar_commands(command.as_str());
     }
-    x.print_help("Invalid Arg");
 }
