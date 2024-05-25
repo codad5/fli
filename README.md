@@ -13,7 +13,7 @@ For unstable changes check the [CHANGELOG.md](https://github.com/codad5/fil/blob
 use fli::Fli;
 
 fn main(){
-    let mut app : Fli = Fli::init("my app", "my app description");
+    let mut app : Fli = Fli::init_from_toml();
     app.option("-n --name, <>", "Name to call you", |x : &Fli| {});
     app.option("-g --greet", "greeting", |x : &Fli| {
         match x.get_values("name".to_owned() /* passing (--name, -n or n) would work*/){
@@ -55,16 +55,27 @@ fn main(){
 }
 ```
 ### Create an App Instance 
+
 ```rust
 fn main(){
-    let mut app = Fli::init("app-name", "app description");
+    let mut app = Fli::init_from_toml(); // to init from your cargo.toml file
+}
+
+```
+> OR
+
+```rust
+fn main(){
+    let mut app = Fli::init_from_toml();
 }
 ```
+
+
 ### Adding Options
 
 ```rust
 fn main(){
-    let mut app = Fli::init("app-name");
+    let mut app = Fli::init_from_toml();
     app.option("-g --greet", "to make a greeting", greet);
     app.option("-n --name, <>", "to set your name", |x|{});
 }
@@ -92,7 +103,7 @@ fn main(){
 You can also add a new command set using the command method
 ```rust
 fn main(){
-    let mut app = Fli::init("app-name", "app-description");
+    let mut app = Fli::init_from_toml();
     app.command("greet", "An app that respects")
     .default(greet)
     .allow_inital_no_param_values(false)
@@ -117,7 +128,7 @@ use fli::Fli;
 
 fn main(){
     //  doing it procedual way
-    let mut app = Fli::init("app-name", "app descripton");
+    let mut app = Fli::init_from_toml();
     let moveCommand = app.command("move", "move files");
     // the [...] means accept optional multiple
     moveCommand.option("-p --path, <...>", "path to files to be moved", move_file);

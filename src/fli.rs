@@ -51,7 +51,7 @@ impl Fli {
         self.name.to_owned()
     }
 
-    /// To init app from toml file, getting the name and 
+    /// To init app from `cargo.toml`` file, getting the name and 
     /// 
     /// # Example
     /// ```rust

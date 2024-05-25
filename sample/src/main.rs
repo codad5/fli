@@ -3,7 +3,7 @@ use fli::Fli;
 // The commit messaege should in this format "fli-[<commit-reason(feature, bug, etc)>] [<commit-message>]"
 // Example: fli-[feature] [add a new feature]
 fn main() {
-    let mut app = Fli::init("Apper", "An app that does many things");
+    let mut app = Fli::init_from_toml();
     app.option("-l --list-apps", "To list all app", |_| {
         let mut app_list: Vec<[&str; 2]> = Vec::new();
         app_list.push(["greeter", "To Greet"]);
