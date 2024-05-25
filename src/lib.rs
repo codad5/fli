@@ -1,9 +1,12 @@
 
+#[cfg(not(doctest))]
 pub mod fli;
+
+pub use fli::Fli;
+use colored::Colorize;
 #[cfg(test)]
 pub mod tests;
-pub use self::fli::*;
-use colored::Colorize;
+
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

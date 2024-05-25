@@ -6,7 +6,7 @@ use crate::{fli_default_callback, levenshtein_distance};
 /// This is the main struct that holds all the data
 ///
 /// # Example
-/// ```rust
+/// ```
 /// let mut app : Fli = Fli::init("name", "a sample app");
 /// app.option("-n --name", "The name of the user", |x| {
 ///    let name = x.get_values("-n".to_string());
@@ -22,7 +22,7 @@ pub struct Fli {
     // The description of the app
     description: String,
     /// The arguments passed to the app (for example :
-    /// ```rust
+    /// ```
     ///  env::args().collect()
     /// ```
     args: Vec<String>,
@@ -54,7 +54,7 @@ impl Fli {
     /// To init app from `cargo.toml`` file, getting the name and 
     /// 
     /// # Example
-    /// ```rust
+    /// ```
     /// let mut app : Fli = Fli::init_from_toml();
     /// ```
     /// 
@@ -72,7 +72,7 @@ impl Fli {
     /// * `description` - The description of the app
     /// 
     /// # Example
-    /// ```rust
+    /// ```
     /// let mut app : Fli = Fli::init("name", "a sample app");
     /// ```
     /// 
@@ -101,7 +101,7 @@ impl Fli {
     /// * `description` - The description of the command
     /// 
     /// # Example
-    /// ```rust
+    /// ```
     /// let mut app : Fli = Fli::init("name", "a sample app");
     /// app.command("greet", "An app that respects")
     ///    .default(greet)
@@ -157,7 +157,7 @@ impl Fli {
     /// * `data` - A boolean to allow duplicate callback
     /// 
     /// # Example
-    /// ```rust
+    /// ```
     /// let mut app : Fli = Fli::init("name", "a sample app");
     /// app.allow_duplicate_callback(true);
     ///
@@ -175,7 +175,7 @@ impl Fli {
     /// * `data` - A boolean to allow initial no param values
     /// 
     /// # Example
-    /// ```rust
+    /// ```
     /// app.allow_inital_no_param_values(true);
     /// ```
     /// 

@@ -1,4 +1,4 @@
-use crate::{fli::Fli, add};
+use crate::{fli::Fli, add, levenshtein_distance};
 
 #[test]
 pub fn test_add() {
@@ -28,5 +28,31 @@ pub fn test_get_callable_name_method(){
     assert_eq!(fli.get_callable_name("--greet".to_string()), "--greet");
     assert_eq!(fli.get_callable_name("time".to_string()), "--time");
     assert_eq!(fli.get_callable_name("g".to_string()), "--greet");
+}
+
+
+
+// test the levenshtein_distance function
+#[test]
+pub fn test_levenshtein_distance() {
+    assert_eq!(levenshtein_distance("kitten", "sitting"), 3);
+    assert_eq!(levenshtein_distance("flaw", "lawn"), 2);
+    assert_eq!(levenshtein_distance("saturday", "sunday"), 3);
+    assert_eq!(levenshtein_distance("hello", "world"), 4);
+}
+
+// test to make sure `Fli::init` is instantiating the struct correctly
+#[test]
+pub fn test_fli_init() {
+    let fli = Fli::init("fli-test", "cook");
+    assert_eq!(fli.get_app_name(), "fli-test");
+}
+
+// test if the `Fli::init_from_toml` is working correctly
+#[test]
+pub fn test_fli_init_from_toml() {
+    let fli = Fli::init_from_toml();
+    let toml_name = std::env::var("CARGO_PKG_NAME").unwrap();
+    assert_eq!(fli.get_app_name(), toml_name);
 }
 
