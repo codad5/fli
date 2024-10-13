@@ -2,6 +2,8 @@
 
 # CHANGELOG
 
+## 0.0.10
+- Added auto version option to hrlp print version using `--version` or `-v`
 ## 0.0.9
 - Fix env var issue 
     - used `env!` macro to get the toml details from the `Cargo.toml` file instead of `std::env::var` to allow compile time env instead of runtime
