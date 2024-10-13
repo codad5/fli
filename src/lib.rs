@@ -55,9 +55,10 @@ fn fli_default_callback(x: &Fli) {
         Some(c) => c,
         None => "".to_string(),
     };
+    println!("Command not found: {}", command.bold().red());
     //  if command is not empty print similar command
-    if !command.is_empty() {
-        println!("invalid {0} Command , use the '-h' or '--help' flag to see all command", x.get_app_name());
+    if command.len() <= 0 {
+        println!("invalid {0} Command , use the '-h' or '--help' flag to see all command", x.get_app_name().bold().red());
         println!("Command not found: {}", command.bold().red());
         x.print_most_similar_commands(command.as_str());
     }
