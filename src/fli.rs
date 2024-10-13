@@ -98,6 +98,7 @@ impl Fli {
             allow_inital_no_param_values: false,
         };
         app.add_help_option();
+        app.add_version_option();
         return app;
     }
 
@@ -217,6 +218,15 @@ impl Fli {
             "-h --help",
             &format!("print help screen for {}", self.name),
             |x| x.default_help(),
+        );
+    }
+
+    /// Add a version option to the app
+    fn add_version_option(&mut self) {
+        self.option(
+            "-v --version",
+            &format!("print version for {}", self.name),
+            |x| println!("{} Version: {}", x.name, x.version),
         );
     }
 
