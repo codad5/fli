@@ -63,11 +63,11 @@ impl Fli {
     /// # Returns
     /// * `Fli` - The Fli struct
     pub fn init_from_toml() -> Self {
-        let name = env::var("CARGO_PKG_NAME").unwrap();
-        let description = env::var("CARGO_PKG_DESCRIPTION").unwrap();
-        let version = env::var("CARGO_PKG_VERSION").unwrap();
-        let mut app = Self::init(name.as_str(), description.as_str());
-        app.set_version(version.as_str());
+        let name = env!("CARGO_PKG_NAME");
+        let description = env!("CARGO_PKG_DESCRIPTION");
+        let version = env!("CARGO_PKG_VERSION");
+        let mut app = Self::init(name, description);
+        app.set_version(version);
         return app;
     }
 
