@@ -135,7 +135,10 @@ impl Fli {
     /// * `&mut Fli` - The Fli struct   
     pub fn command(&mut self, name: &str, description: &str) -> &mut Fli {
         let mut args = self.args.clone();
-        args.remove(0);
+        // check for zero index if available remove it
+        if args.len() > 0 {
+            args.remove(0);
+        }
         let mut new_fli = Self {
             name: name.to_string(),
             description: description.to_string(),
