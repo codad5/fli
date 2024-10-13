@@ -21,7 +21,18 @@ jobs:
       - name: Build and Test
         run: cargo build --verbose && cargo test --verbose
 
+      - name: Check version consistency
+        id: check_version
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          CARGO_VERSION=$(grep '^version =' Cargo.toml | sed -E 's/version = "(.*)"/\1/')
+          if [ "$TAG_VERSION" != "$CARGO_VERSION" ]; then
+            echo "Tag version ($TAG_VERSION) does not match Cargo.toml version ($CARGO_VERSION)"
+            exit 1
+          fi
+
       - name: Publish to Crates.io
+        if: steps.check_version.outputs.result == 'success'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_TOKEN }}
         run: cargo publish --token $CARGO_REGISTRY_TOKEN
