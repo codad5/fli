@@ -1,0 +1,12 @@
+services:
+  dev:
+    build: .
+    volumes:
+      - .:/app  # Mount current directory to /app in the container
+      - cargo-cache:/usr/local/cargo/registry  # Cache Rust dependencies
+    working_dir: /app
+    command: /bin/bash  # Keep the container running and allow interaction
+    tty: true
+
+volumes:
+  cargo-cache:
