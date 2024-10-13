@@ -1,6 +1,9 @@
 <!-- chanagelog.md -->
 
 # CHANGELOG
+## 0.0.6
+- Fix issue on removing index out of bounds when getting values
+
 ## 0.0.5
 - Added support to set app version
     - `app.set_version("0.0.5")`
