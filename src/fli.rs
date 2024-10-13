@@ -21,6 +21,8 @@ pub struct Fli {
     name: String,
     // The description of the app
     description: String,
+    // the version of the app
+    version: String,
     /// The arguments passed to the app (for example :
     /// ```
     ///  env::args().collect()
@@ -63,7 +65,10 @@ impl Fli {
     pub fn init_from_toml() -> Self {
         let name = env::var("CARGO_PKG_NAME").unwrap();
         let description = env::var("CARGO_PKG_DESCRIPTION").unwrap();
-        return Self::init(name.as_str(), description.as_str());
+        let version = env::var("CARGO_PKG_VERSION").unwrap();
+        let mut app = Self::init(name.as_str(), description.as_str());
+        app.set_version(version.as_str());
+        return app;
     }
 
     /// Initializes the Fli struct with the name and description
@@ -82,6 +87,7 @@ impl Fli {
         let mut app = Self {
             name: name.to_string(),
             description: description.to_string(),
+            version: String::new(),
             args: env::args().collect(),
             args_hash_table: HashMap::new(),
             short_hash_table: HashMap::new(),
@@ -133,6 +139,7 @@ impl Fli {
         let mut new_fli = Self {
             name: name.to_string(),
             description: description.to_string(),
+            version: self.version.to_string(),
             args: args,
             args_hash_table: HashMap::new(),
             short_hash_table: HashMap::new(),
@@ -150,6 +157,19 @@ impl Fli {
             .cammands_hash_tables
             .get_mut(&name.to_string())
             .unwrap();
+    }
+
+    /// To set the version of the app
+    /// # Arguments
+    /// * `version` - The version of the app
+    
+    pub fn set_version(&mut self, version: &str) -> &mut Self {
+        self.version = version.to_string();
+        self
+    }
+
+    pub fn version(&self) -> String {
+        self.version.to_owned()
     }
 
     /// Allows duplicate callback
@@ -215,6 +235,7 @@ impl Fli {
     }
     fn default_help(&self) {
         println!("{0: <1} {1}: {2}", "", "Name".bold().green(), self.name);
+        println!("{0: <1} {1}: {2}", "", "Version".bold().green(), self.version);
         println!(
             "{0: <1} {1}: {2}",
             "",
