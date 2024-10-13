@@ -2,12 +2,12 @@
 
 A library for creating command line apps in rust inspired by the like of [commander.js](https://github.com/tj/commander.js)
 
-> NOTE: Check out [sample code](https://github.com/codad5/fil/blob/master/sample/src/main.rs)
+> NOTE: Check out [sample code](https://github.com/codad5/fli/blob/master/sample/src/main.rs)
 
 ## Changes
-For stable changes check the [CHANGELOG.md](https://github.com/codad5/fil/blob/master/CHANGELOG.md) file
+For stable changes check the [CHANGELOG.md](https://github.com/codad5/fli/blob/master/CHANGELOG.md) file 
 
-For unstable changes check the [CHANGELOG.md](https://github.com/codad5/fil/blob/dev/CHANGELOG.md) file
+For unstable changes check the [CHANGELOG.md](https://github.com/codad5/fli/blob/dev/CHANGELOG.md) file
 
 ```rust
 use fli::Fli;
