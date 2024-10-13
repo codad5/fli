@@ -14,7 +14,8 @@ categories = [
     "parsing",
     "development-tools::cargo-plugins",
     "text-processing",
-    "utilities"
+    "development-tools"
+
 ]
 keywords = ["cli", "cli-parser", "parser", "clap", "fli"]
 
