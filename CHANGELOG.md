@@ -3,10 +3,10 @@
 # CHANGELOG
 
 ## 0.1.0
-- Added new `init_from_toml` macro to allow initializing the app from a toml file
-    - `init_from_toml!` macro will read the toml file and initialize the app with the values
-- Deprecated `init_from_toml` function
-    - `init_from_toml` function is deprecated and will be removed in the next major release
+- Added new `init_fli_from_toml` macro to allow initializing the app from a toml file
+    - `init_fli_from_toml!` macro will read the toml file and initialize the app with the values
+- Deprecated `init_from_toml` method
+    - `init_from_toml` method is deprecated and will be removed in the next major release
 
 ## 0.0.10
 - Added auto version option to hrlp print version using `--version` or `-v`

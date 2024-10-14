@@ -10,10 +10,10 @@ For stable changes check the [CHANGELOG.md](https://github.com/codad5/fli/blob/m
 For unstable changes check the [CHANGELOG.md](https://github.com/codad5/fli/blob/dev/CHANGELOG.md) file
 
 ```rust
-use fli::{Fli, init_from_toml};
+use fli::{Fli, init_fli_from_toml};
 
 fn main(){
-    let mut app : Fli = init_from_toml!(); // using the toml file
+    let mut app : Fli = init_fli_from_toml!(); // using the toml file
     app.option("-n --name, <>", "Name to call you", |x : &Fli| {});
     app.option("-g --greet", "greeting", |x : &Fli| {
         match x.get_values("name".to_owned() /* passing (--name, -n or n) would work*/){
@@ -58,7 +58,7 @@ fn main(){
 
 ```rust
 fn main(){
-    let mut app = init_from_toml!(); // to init from your cargo.toml file
+    let mut app = init_fli_from_toml!(); // to init from your cargo.toml file
 }
 
 ```
@@ -76,7 +76,7 @@ fn main(){
 
 ```rust
 fn main(){
-    let mut app = init_from_toml!();
+    let mut app = init_fli_from_toml!();
     app.option("-g --greet", "to make a greeting", greet);
     app.option("-n --name, <>", "to set your name", |x|{});
 }
@@ -104,7 +104,7 @@ fn main(){
 You can also add a new command set using the command method
 ```rust
 fn main(){
-    let mut app = init_from_toml!();
+    let mut app = init_fli_from_toml!();
     app.command("greet", "An app that respects")
     .default(greet)
     .allow_inital_no_param_values(false)
@@ -129,7 +129,7 @@ use fli::Fli;
 
 fn main(){
     //  doing it procedual way
-    let mut app = init_from_toml!();
+    let mut app = init_fli_from_toml!();
     let moveCommand = app.command("move", "move files");
     // the [...] means accept optional multiple
     moveCommand.option("-p --path, <...>", "path to files to be moved", move_file);
