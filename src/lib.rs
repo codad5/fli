@@ -1,6 +1,7 @@
 
 #[cfg(not(doctest))]
 pub mod fli;
+pub mod macros;
 
 pub use fli::Fli;
 use colored::Colorize;

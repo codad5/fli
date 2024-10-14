@@ -1,4 +1,4 @@
-use fli::Fli;
+use fli::{init_fli_from_toml, Fli};
 
 
 
@@ -16,7 +16,7 @@ use fli::Fli;
 
 
 fn main(){
-    let mut app : Fli = Fli::init_from_toml();
+    let mut app : Fli = init_fli_from_toml!();
     app.allow_inital_no_param_values(false);
 
     let mut calc_app = app.command("calc", "perform basic 2 numeric calculation");

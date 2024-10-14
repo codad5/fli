@@ -1,7 +1,7 @@
 [package]
 name = "fli"
 description = "The commander.js like CLI Parser for rust"
-version = "0.0.10"
+version = "0.1.0"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/codad5/fli"
