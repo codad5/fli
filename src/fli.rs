@@ -62,6 +62,7 @@ impl Fli {
     /// 
     /// # Returns
     /// * `Fli` - The Fli struct
+    #[deprecated]
     pub fn init_from_toml() -> Self {
         let name = env!("CARGO_PKG_NAME");
         let description = env!("CARGO_PKG_DESCRIPTION");
