@@ -1,5 +1,6 @@
 [package]
 name = "sample"
+description = "A sample project to demonstrate how to use fli"
 version = "0.1.0"
 edition = "2021"
 
