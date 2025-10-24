@@ -17,6 +17,7 @@ fn main() {
             ValueTypes::RequiredSingle(Value::Str(String::new())))
         .add_option("times", "Times to greet", "-t", "--times", 
             ValueTypes::OptionalSingle(Some(Value::Int(1))))
+        .set_expected_positional_args(2)
         .set_callback(|data| {
             let name = data.get_option_value("name")
                 .and_then(|v| v.as_str())

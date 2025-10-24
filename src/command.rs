@@ -314,11 +314,11 @@ impl FliCommand {
             // basic.push_str(&format!(" [ARGUMENTS({})]", expected));
 
             // alternative form: repeat the argument placeholder `expected` times
-            let repeated = std::iter::repeat("[ARGUMENT]")
+            let repeated = std::iter::repeat(" [ARGUMENT]")
                 .take(expected)
                 .collect::<Vec<_>>()
-                .join(" ");
-            let repeated_pattern = format!("{} {}", prefix, repeated);
+                .join("");
+            let repeated_pattern = format!("{}", repeated);
             repeated_pattern
             // add the repeated-arguments pattern (OPTIONS is appended later for the main pattern,
             // so include it here to be consistent)
