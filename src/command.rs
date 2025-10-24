@@ -1,6 +1,9 @@
 // command.rs
 use std::collections::HashMap;
 
+use colored::Colorize;
+
+use crate::display;
 use crate::option_parser::{
     CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes,
 };
@@ -200,6 +203,7 @@ pub struct FliCommand {
     pub preserved_options: Vec<PreservedOption>,
     pub preserved_short_flags: HashMap<String, usize>, // map short flag to index in preserved_options
     pub preserved_long_flags: HashMap<String, usize>, // map long flag to index in preserved_options
+    pub expected_positional_args: usize,
 }
 
 impl FliCommand {
@@ -224,9 +228,24 @@ impl FliCommand {
             preserved_options: Vec::new(),
             preserved_short_flags: HashMap::new(),
             preserved_long_flags: HashMap::new(),
+            expected_positional_args: 0,
         };
         x.setup_help_flag();
         x
+    }
+
+    /// Sets the number of expected positional arguments for this command.
+    ///
+    /// Returns &mut Self for chaining.
+    pub fn set_expected_positional_args(&mut self, count: usize) -> &mut Self {
+        self.expected_positional_args = count;
+        self
+    }
+
+
+    /// Returns the number of expected positional arguments for this command.
+    pub fn get_expected_positional_args(&self) -> usize {
+        self.expected_positional_args
     }
 
     /// Adds a standard --help/-h flag to the command.
@@ -248,18 +267,52 @@ impl FliCommand {
             "--help",
             ValueTypes::None,
             |data| {
-                println!("Help for command: {}", data.get_command().get_name());
-                println!("{}", data.get_command().get_description());
-                println!("Options:");
-                for x in data.option_parser.get_options() {
-                    println!("  {} / {} : {}", x.short_flag, x.long_flag, x.description);
+                let cmd = data.get_command();
+
+                // Print command info
+                display::print_section(&format!("Command: {}", cmd.get_name()));
+                println!("  {}", cmd.get_description().white());
+
+                // Print options table
+                let options = data.option_parser.get_options();
+                if !options.is_empty() {
+                    display::print_section("Options");
+
+                    let headers = vec!["Short", "Long", "Type", "Description"];
+                    let rows: Vec<Vec<&str>> = options
+                        .iter()
+                        .map(|opt| {
+                            let value_type = match &opt.value {
+                                ValueTypes::None => "flag",
+                                ValueTypes::RequiredSingle(_) => "required",
+                                ValueTypes::OptionalSingle(_) => "optional",
+                                ValueTypes::RequiredMultiple(_, _) => "multiple required",
+                                ValueTypes::OptionalMultiple(_, _) => "multiple optional",
+                            };
+                            vec![
+                                opt.short_flag.as_str(),
+                                opt.long_flag.as_str(),
+                                value_type,
+                                opt.description.as_str(),
+                            ]
+                        })
+                        .collect();
+
+                    display::print_table(&headers, &rows, None);
                 }
-                if data.get_command().has_sub_commands() {
-                    println!("Subcommands:");
-                    for (sub_name, sub_cmd) in data.get_command().get_sub_commands() {
-                        println!("  {} : {}", sub_name, sub_cmd.get_description());
-                    }
+
+                // Print subcommands
+                if cmd.has_sub_commands() {
+                    let items: Vec<(&str, &str)> = cmd
+                        .get_sub_commands()
+                        .iter()
+                        .map(|(name, sub_cmd)| (name.as_str(), sub_cmd.get_description().as_str()))
+                        .collect();
+
+                    display::print_item_list(&items, Some("Subcommands"));
                 }
+
+                std::process::exit(0);
             },
         );
     }
@@ -539,7 +592,10 @@ impl FliCommand {
         // Prepare the parser with this command's options
         arg_parser.prepare(self)?;
 
-        println!("Parsed arguments: {:?}", arg_parser.get_command_chain());
+        display::debug_print(
+            "App",
+            &format!("Parsed arguments: {:?}", arg_parser.get_command_chain()),
+        );
 
         let chain = arg_parser.get_parsed_commands_chain().clone();
         let mut chain_iter = chain.iter();

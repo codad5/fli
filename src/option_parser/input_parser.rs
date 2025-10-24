@@ -349,6 +349,13 @@ impl InputArgsParser {
                 return self.prepare(command);
             }
 
+            if command.get_expected_positional_args() <= 0
+                && (matches!(state, ParseState::Start | ParseState::InCommand)
+                    || matches!(self.command_chain.last(), Some(CommandChain::SubCommand(_))))
+            {
+                return Err(FliError::UnknownCommand(arg.to_string()));
+            }
+
             // Otherwise, it's an argument
             self.command_chain
                 .push(CommandChain::Argument(arg.to_string()));

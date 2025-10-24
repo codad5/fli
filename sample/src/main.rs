@@ -2,7 +2,7 @@ use fli::{app::Fli, option_parser::{Value, ValueTypes}};
 
 
 fn main() {
-    let mut app = Fli::new("myapp", "1.0.0", "A sample CLI app");
+    let mut app = Fli::new("myapp", "1.0.0", "A sample CLI app").with_debug();
     
     // Define root-level options
     app.add_option("verbose", "Enable verbose output", "-v", "--verbose", 

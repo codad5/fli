@@ -1,5 +1,6 @@
 use crate::{
     command::{FliCallbackData, FliCommand},
+    display,
     error::{FliError, Result},
     option_parser::{InputArgsParser, ValueTypes},
 };
@@ -188,9 +189,8 @@ impl Fli {
     pub fn run(&mut self) {
         let args: Vec<String> = std::env::args().collect();
 
-        println!("Running {} version {}", self.name, self.version);
-        println!("{}", self.description);
-        println!("Parsing arguments: {:?}", args);
+        display::debug_print("App", &format!("Running {} v{}", self.name, self.version));
+        display::debug_struct("Arguments", &args);
 
         // Skip the program name
         let command_args = if args.len() > 1 {
@@ -202,11 +202,52 @@ impl Fli {
         let parser = InputArgsParser::new(self.root_command.get_name().to_string(), command_args);
 
         match self.root_command.run(parser) {
-            Ok(_) => {}
+            Ok(_) => {
+                display::debug_print("App", "Execution completed successfully");
+            }
             Err(e) => {
-                eprintln!("Error: {}", e);
+                display::print_error_detailed(
+                    "Command Execution Failed",
+                    &e.to_string(),
+                    Some("Run with --help for usage information"),
+                );
+
+                if let FliError::UnknownCommand(cmd) = e {
+                    let available: Vec<String> = self
+                        .root_command
+                        .get_sub_commands()
+                        .keys()
+                        .cloned()
+                        .collect();
+                    display::print_did_you_mean(&cmd, &available);
+                }
                 std::process::exit(1);
             }
+        }
+    }
+}
+
+
+impl Fli {
+    /// Enable debug mode for the application
+    pub fn with_debug(mut self) -> Self {
+        display::enable_debug();
+        self
+    }
+    
+    /// Add a debug flag to root command
+    pub fn add_debug_option(&mut self) {
+        self.add_option(
+            "debug",
+            "Enable debug output",
+            "-D",
+            "--debug",
+            ValueTypes::None,
+        );
+        
+        // Check if debug flag is present in args
+        if std::env::args().any(|arg| arg == "-D" || arg == "--debug") {
+            display::enable_debug();
         }
     }
 }

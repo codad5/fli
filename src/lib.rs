@@ -3,6 +3,7 @@ pub mod command;
 pub mod error;
 pub mod macros;
 pub mod option_parser;
+pub mod display;
 pub use error::{FliError, Result};
 pub use app::Fli;
 
