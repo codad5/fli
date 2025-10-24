@@ -212,13 +212,7 @@ impl Fli {
                     Some("Run with --help for usage information"),
                 );
 
-                if let FliError::UnknownCommand(cmd) = e {
-                    let available: Vec<String> = self
-                        .root_command
-                        .get_sub_commands()
-                        .keys()
-                        .cloned()
-                        .collect();
+                if let FliError::UnknownCommand(cmd, available) = e {
                     display::print_did_you_mean(&cmd, &available);
                 }
                 std::process::exit(1);

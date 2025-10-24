@@ -353,7 +353,8 @@ impl InputArgsParser {
                 && (matches!(state, ParseState::Start | ParseState::InCommand)
                     || matches!(self.command_chain.last(), Some(CommandChain::SubCommand(_))))
             {
-                return Err(FliError::UnknownCommand(arg.to_string()));
+                let available: Vec<String> = command.get_sub_commands().keys().cloned().collect();
+                return Err(FliError::UnknownCommand(arg.to_string(), available));
             }
 
             // Otherwise, it's an argument
