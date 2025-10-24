@@ -2,6 +2,9 @@
 #[cfg(not(doctest))]
 pub mod fli;
 pub mod macros;
+pub mod command;
+pub mod option_parser;
+pub mod app;
 
 pub use fli::Fli;
 use colored::Colorize;
