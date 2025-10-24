@@ -1,4 +1,4 @@
-use fli::{app::Fli, option_parser::{Value, ValueTypes}};
+use fli::{Fli, option_parser::{Value, ValueTypes}};
 
 
 fn main() {
