@@ -100,6 +100,9 @@ pub enum FliError {
     /// Internal error (shouldn't happen in normal usage)
     #[error("Internal error: {0}")]
     Internal(String),
+    /// Invalid command usage (e.g., wrong flags or operands)
+    #[error("Invalid usage: {0}. Run with --help to see correct usage")]
+    InvalidUsage (String),
 }
 
 impl FliError {

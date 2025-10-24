@@ -1,8 +1,8 @@
-use fli::{app::Fli, option_parser::{Value, ValueTypes}};
+use fli::{init_fli_from_toml, option_parser::{Value, ValueTypes}, Fli};
 
 
 fn main() {
-    let mut app = Fli::new("myapp", "1.0.0", "A sample CLI app").with_debug();
+    let mut app = init_fli_from_toml!().with_debug();
     
     // Define root-level options
     app.add_option("verbose", "Enable verbose output", "-v", "--verbose", 
