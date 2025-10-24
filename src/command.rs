@@ -1,10 +1,9 @@
 // command.rs
 use std::collections::HashMap;
 
-use crate::option_parser::{
-    CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes,
-};
+use crate::option_parser::{CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes};
 
+#[derive(Debug, Clone)]
 pub struct FliCallbackData {
     pub command: FliCommand,
     pub option_parser: CommandOptionsParser,
@@ -49,6 +48,7 @@ impl FliCallbackData {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct FliCommand {
     pub name: String,
     pub description: String,
@@ -129,11 +129,61 @@ impl FliCommand {
         self.callback
     }
 
-    pub fn run(&self, arg_parser: &InputArgsParser) {
-        // need something like this
-
-        for command_chain in arg_parser.get_parsed_commands_chain() {
-            // if the first chain is command then it is a sub command get it if it exists call the run method recursively passing the arg_parser but remove the first chain, that means it has to be iter so we can maybe call something like `arg_parser.get_remaining_commands_chain()` or we can clone and remove the first element
+    pub fn run(&self, mut arg_parser: InputArgsParser) -> Result<(), String> {
+        // Prepare the parser with this command's options
+        arg_parser.prepare(self)?;
+        
+        let chain = arg_parser.get_parsed_commands_chain().clone();
+        let mut chain_iter = chain.iter();
+        
+        // Collect arguments and check for subcommands
+        let mut arguments = Vec::new();
+        let mut next_subcommand: Option<(&String, Vec<CommandChain>)> = None;
+        
+        for (idx, item) in chain.iter().enumerate() {
+            match item {
+                CommandChain::SubCommand(sub_name) => {
+                    // Found a subcommand, collect remaining chain items
+                    let remaining: Vec<CommandChain> = chain[idx+1..].to_vec();
+                    next_subcommand = Some((sub_name, remaining));
+                    break;
+                }
+                CommandChain::Argument(arg) => {
+                    arguments.push(arg.clone());
+                }
+                CommandChain::Option(_, _) => {
+                    // Options are already processed, just skip
+                }
+            }
         }
+        
+        // If there's a subcommand, handle it recursively
+        if let Some((sub_name, remaining_chain)) = next_subcommand {
+            if let Some(sub_command) = self.get_sub_command(sub_name) {
+                // Create a new parser for the subcommand
+                let mut sub_parser = InputArgsParser::new(
+                    sub_name.clone(),
+                    Vec::new() // We'll reconstruct args from chain
+                );
+                sub_parser.command_chain = remaining_chain;
+                
+                return sub_command.run(sub_parser);
+            } else {
+                return Err(format!("Unknown subcommand: {}", sub_name));
+            }
+        }
+        
+        // No subcommand, execute this command's callback
+        if let Some(callback) = self.get_callback() {
+            let callback_data = FliCallbackData::new(
+                self.clone(),
+                self.get_option_parser(),
+                arguments,
+                arg_parser,
+            );
+            callback(&callback_data);
+        }
+        
+        Ok(())
     }
 }
