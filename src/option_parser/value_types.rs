@@ -1,3 +1,4 @@
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Str(String),
@@ -15,7 +16,19 @@ pub enum ValueTypes {
     None,
 }
 
+
+
 impl ValueTypes {
+    pub fn expects_value(&self) -> bool {
+        match self {
+            ValueTypes::RequiredSingle(_) => true,
+            ValueTypes::OptionalSingle(_) => true,
+            ValueTypes::RequiredMultiple(_, _) => true,
+            ValueTypes::OptionalMultiple(_, _) => true,
+            ValueTypes::None => false,
+        }
+    }
+
     pub fn as_str(&self) -> Option<&str> {
         match self {
             ValueTypes::RequiredSingle(Value::Str(s)) => Some(s),

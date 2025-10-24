@@ -39,16 +39,11 @@ impl FliCallbackData {
             return Some(val);
         }
 
-        println!("long check for name: {}", name);
-
         // try double-dash prefix
         let long = format!("--{}", name);
         if let Some(val) = self.option_parser.get_option_expected_value_type(&long) {
-            println!("Found long option: {} with value {:?}", long, val);
             return Some(val);
         }
-
-        println!("fallback check for name: {}", name);
 
         // fallback to raw name
         self.option_parser.get_option_expected_value_type(name)
