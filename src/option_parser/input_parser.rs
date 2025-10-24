@@ -2,14 +2,41 @@ use super::parse_state::ParseState;
 use super::value_types::{Value, ValueTypes};
 use crate::command::FliCommand;
 
+/// Represents elements in the parsed command chain.
+///
+/// Each element describes what was encountered during parsing:
+/// - A subcommand to execute
+/// - An option with its value
+/// - A positional argument
+/// - A preserved option that triggers immediate callback
 #[derive(Debug, Clone)]
 pub enum CommandChain {
+    /// A subcommand was encountered
     SubCommand(String),
+    /// An option with its parsed value
     Option(String, ValueTypes),
+    /// A positional argument
     Argument(String),
+    /// A preserved option that should trigger immediate callback
     IsPreservedOption(String),
 }
 
+/// Parses command-line arguments into a structured command chain.
+///
+/// This is the core parsing engine that:
+/// 1. Tokenizes raw arguments
+/// 2. Identifies commands, options, and values
+/// 3. Validates against expected option types
+/// 4. Builds a chain representing the parse tree
+///
+/// # Examples
+///
+/// ```rust
+/// let args = vec!["copy".to_string(), "-s".to_string(),
+///                 "file1.txt".to_string(), "file2.txt".to_string()];
+/// let mut parser = InputArgsParser::new("copy".to_string(), args);
+/// parser.prepare(&mut command)?;
+/// ```
 #[derive(Debug, Clone)]
 pub struct InputArgsParser {
     pub command: String,
@@ -19,6 +46,16 @@ pub struct InputArgsParser {
 }
 
 impl InputArgsParser {
+    /// Creates a new argument parser.
+    ///
+    /// # Arguments
+    ///
+    /// * `command` - The command name being parsed
+    /// * `args` - The raw arguments (without program name)
+    ///
+    /// # Returns
+    ///
+    /// An unprepared parser (call `prepare()` before use)
     pub fn new(command: String, args: Vec<String>) -> Self {
         Self {
             command,
@@ -28,10 +65,55 @@ impl InputArgsParser {
         }
     }
 
+    /// Returns the parsed command chain.
+    ///
+    /// # Returns
+    ///
+    /// Reference to the vector of parsed `CommandChain` elements
+    ///
+    /// # Note
+    ///
+    /// Only valid after `prepare()` has been called.
     pub fn get_parsed_commands_chain(&self) -> &Vec<CommandChain> {
         &self.command_chain
     }
 
+    /// Parses arguments and validates them against the command definition.
+    ///
+    /// This is the main parsing method that:
+    /// 1. Validates command name matches
+    /// 2. Iterates through arguments
+    /// 3. Handles state transitions (option -> value -> next option)
+    /// 4. Validates required values are provided
+    /// 5. Handles special cases like "--" and preserved options
+    ///
+    /// # Arguments
+    ///
+    /// * `command` - The command definition with expected options
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(&mut Self)` - If parsing succeeded
+    /// * `Err(String)` - If parsing failed with error description
+    ///
+    /// # Errors
+    ///
+    /// Returns errors for:
+    /// - Command name mismatch
+    /// - Missing required option values
+    /// - Unexpected "--" placement
+    /// - Invalid option-value combinations
+    /// - Unknown options or subcommands
+    ///
+    /// # State Machine
+    ///
+    /// Uses `ParseState` to track current parsing context:
+    /// - `Start` -> `InCommand`: After verifying command name
+    /// - `InCommand` -> `InOption`: When encountering an option flag
+    /// - `InOption` -> `AcceptingValue`: For options that need values
+    /// - `AcceptingValue` -> `InOption`: After consuming value(s)
+    /// - Any -> `Breaking`: When encountering "--"
+    /// - Any -> `End`: When parsing completes
     pub fn prepare(&mut self, command: &mut FliCommand) -> Result<&mut Self, String> {
         if self.is_prepared {
             println!("Parser is already prepared");
@@ -313,6 +395,18 @@ impl InputArgsParser {
         Ok(self)
     }
 
+    /// Creates a parser from an existing command chain.
+    ///
+    /// Used internally for subcommand handling.
+    ///
+    /// # Arguments
+    ///
+    /// * `command` - Command name
+    /// * `chain` - Pre-built command chain
+    ///
+    /// # Returns
+    ///
+    /// A parser marked as already prepared
     pub fn from_chain(command: String, chain: Vec<CommandChain>) -> Self {
         Self {
             command,
@@ -322,7 +416,17 @@ impl InputArgsParser {
         }
     }
 
-    /// Clone parser with remaining chain after index
+    /// Creates a new parser with remaining chain elements after an index.
+    ///
+    /// Used for passing control to subcommands.
+    ///
+    /// # Arguments
+    ///
+    /// * `start_idx` - Index to start slicing from
+    ///
+    /// # Returns
+    ///
+    /// New parser with remaining chain elements
     pub fn with_remaining_chain(&self, start_idx: usize) -> Self {
         let remaining_chain = if start_idx < self.command_chain.len() {
             self.command_chain[start_idx..].to_vec()
@@ -338,10 +442,14 @@ impl InputArgsParser {
         }
     }
 
+    /// Returns the command name being parsed.
     pub fn get_command(&self) -> &String {
         &self.command
     }
-    
+
+    /// Returns the full command chain.
+///
+/// Alias for `get_parsed_commands_chain()` for convenience.
     pub fn get_command_chain(&self) -> &Vec<CommandChain> {
         &self.command_chain
     }
