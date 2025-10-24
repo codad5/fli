@@ -21,3 +21,4 @@ keywords = ["cli", "cli-parser", "parser", "clap", "fli"]
 
 [dependencies]
 colored = "2.0.4"
+thiserror = "2.0.17"
