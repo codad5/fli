@@ -12,7 +12,7 @@ fn main() {
         ValueTypes::OptionalSingle(None));
     
     // Define a command with options
-    let greet_cmd = app.command("greet", "Greet someone")
+    let greet_cmd = app.command("greet", "Greet someone").unwrap()
         .add_option("name", "Name to greet", "-n", "--name", 
             ValueTypes::RequiredSingle(Value::Str(String::new())))
         .add_option("times", "Times to greet", "-t", "--times", 
@@ -35,7 +35,7 @@ fn main() {
         });
     
     // Define a file command with subcommands
-    let file_cmd = app.command("file", "File operations");
+    let file_cmd = app.command("file", "File operations").unwrap();
     
     file_cmd.subcommand("copy", "Copy files")
         .add_option("source", "Source files", "-s", "--source", 

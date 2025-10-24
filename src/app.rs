@@ -1,5 +1,6 @@
 use crate::{
     command::{FliCallbackData, FliCommand},
+    error::{FliError, Result},
     option_parser::{InputArgsParser, ValueTypes},
 };
 
@@ -38,12 +39,11 @@ impl Fli {
     ///
     /// # Returns
     ///
-    /// A mutable reference to the command for further configuration
+    /// A mutable reference to the `FliCommand` instance.
     ///
     /// # Panics
     ///
-    /// Currently panics if the command cannot be retrieved after insertion.
-    /// This should be changed to return `Result` in a future version.
+    /// Panics if the command cannot be retrieved after insertion (should not happen).
     ///
     /// # Examples
     ///
@@ -52,10 +52,13 @@ impl Fli {
     ///    .add_option("port", "Port to bind to", "-p", "--port",
     ///                ValueTypes::RequiredSingle(Value::Int(8080)));
     /// ```
-    pub fn command(&mut self, name: &str, description: &str) -> &mut FliCommand {
+    pub fn command(&mut self, name: &str, description: &str) -> Result<&mut FliCommand> {
         let command = FliCommand::new(name, description);
         self.add_command(command);
-        self.root_command.sub_commands.get_mut(name).unwrap()
+        self.root_command
+            .sub_commands
+            .get_mut(name)
+            .ok_or_else(|| FliError::Internal("Failed to get command after insertion".to_string()))
     }
 
     /// Adds a pre-configured command to the application.
