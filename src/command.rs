@@ -305,15 +305,44 @@ impl FliCommand {
             basic.push_str("[SUBCOMMANDS]");
         }
 
+        let expected = cmd.get_expected_positional_args();
+        let args_pattern: String = if expected > 0 {
+            // keep a snapshot of the current prefix (may include [SUBCOMMANDS])
+            let prefix = basic.clone();
+
+            // grouped form: single placeholder showing count
+            // basic.push_str(&format!(" [ARGUMENTS({})]", expected));
+
+            // alternative form: repeat the argument placeholder `expected` times
+            let repeated = std::iter::repeat("[ARGUMENT]")
+                .take(expected)
+                .collect::<Vec<_>>()
+                .join(" ");
+            let repeated_pattern = format!("{} {}", prefix, repeated);
+            repeated_pattern
+            // add the repeated-arguments pattern (OPTIONS is appended later for the main pattern,
+            // so include it here to be consistent)
+            // patterns.push(format!("{}", repeated_pattern));
+        } else {
+            String::new()
+        };
+
         // If command can accept positional arguments
-        basic.push_str(" [ARGUMENTS]");
+        basic.push_str(&args_pattern);
 
         basic.push_str(" [OPTIONS]");
 
         patterns.push(basic);
 
         // Pattern with double-dash separator
-        let with_separator = format!("[SUBCOMMANDS] [OPTIONS] -- [ARGUMENTS]");
+        let with_separator = format!(
+            "[SUBCOMMANDS] [OPTIONS] {}",
+            if expected > 0 {
+                format!("-- {}", args_pattern)
+            } else {
+                String::new()
+            }
+        );
         patterns.push(with_separator);
 
         patterns
