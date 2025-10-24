@@ -20,13 +20,6 @@ pub struct InputArgsParser {
 
 impl InputArgsParser {
     pub fn new(command: String, args: Vec<String>) -> Self {
-        // let command = args.get(0).cloned().unwrap_or_default();
-        // let args = if args.len() > 1 {
-        //     args[1..].to_vec()
-        // } else {
-        //     Vec::new()
-        // };
-
         Self {
             command,
             args,
