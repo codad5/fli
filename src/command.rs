@@ -67,6 +67,14 @@ impl FliCallbackData {
 }
 
 #[derive(Debug, Clone)]
+pub struct PreservedOption {
+    pub long_flag: String,
+    pub short_flag: String,
+    pub value_type: ValueTypes,
+    pub callback: fn(&FliCallbackData),
+}
+
+#[derive(Debug, Clone)]
 pub struct FliCommand {
     pub name: String,
     pub description: String,
@@ -74,18 +82,53 @@ pub struct FliCommand {
     pub option_parser_builder: CommandOptionsParserBuilder,
     pub sub_commands: HashMap<String, FliCommand>,
     pub callback: Option<fn(&FliCallbackData)>,
+    pub preserved_options: Vec<PreservedOption>,
+    pub preserved_short_flags: HashMap<String, usize>, // map short flag to index in preserved_options
+    pub preserved_long_flags: HashMap<String, usize>, // map long flag to index in preserved_options
 }
 
 impl FliCommand {
     pub fn new(name: &str, description: &str) -> Self {
-        Self {
+        let mut x = Self {
             name: name.to_owned(),
             description: description.to_owned(),
             // arg_parser: InputArgsParser::new(name.to_string(), Vec::new()),
             sub_commands: HashMap::new(),
             callback: None,
             option_parser_builder: CommandOptionsParserBuilder::new(),
-        }
+            preserved_options: Vec::new(),
+            preserved_short_flags: HashMap::new(),
+            preserved_long_flags: HashMap::new(),
+        };
+        x.setup_help_flag();
+        x
+    }
+
+    pub fn setup_help_flag(&mut self) {
+        self.add_option_with_callback(
+            "help",
+            "Show help information",
+            "-h",
+            "--help",
+            ValueTypes::None,
+            |data| {
+                println!("Help for command: {}", data.get_command().get_name());
+                println!("{}", data.get_command().get_description());
+                println!("Options:");
+                for x in data.option_parser.get_options() {
+                    println!(
+                        "  {} / {} : {}",
+                        x.short_flag, x.long_flag, x.description
+                    );
+                }
+                if data.get_command().has_sub_commands() {
+                    println!("Subcommands:");
+                    for (sub_name, sub_cmd) in data.get_command().get_sub_commands() {
+                        println!("  {} : {}", sub_name, sub_cmd.get_description());
+                    }
+                }
+            },
+        );
     }
 
     pub fn set_callback(&mut self, callback: fn(&FliCallbackData)) {
@@ -141,6 +184,80 @@ impl FliCommand {
         self
     }
 
+    pub fn add_option_with_callback(
+        &mut self,
+        name: &str,
+        description: &str,
+        short_flag: &str,
+        long_flag: &str,
+        value: ValueTypes,
+        callback: fn(&FliCallbackData),
+    ) -> &mut Self {
+        // register option with the normal option parser builder (clone value for the builder)
+        self.option_parser_builder.add_option(
+            name,
+            description,
+            short_flag,
+            long_flag,
+            value.clone(),
+        );
+
+        // create preserved option that will trigger the provided callback when encountered
+        let preserved = PreservedOption {
+            long_flag: long_flag.to_string(),
+            short_flag: short_flag.to_string(),
+            value_type: value,
+            callback,
+        };
+
+        // record index and maps for quick lookup
+        let idx = self.preserved_options.len();
+        if !preserved.short_flag.is_empty() {
+            self.preserved_short_flags
+                .insert(preserved.short_flag.clone(), idx);
+        }
+        if !preserved.long_flag.is_empty() {
+            self.preserved_long_flags
+                .insert(preserved.long_flag.clone(), idx);
+        }
+
+        self.preserved_options.push(preserved);
+        self
+    }
+
+    pub fn get_preserved_option(&self, name: &str) -> Option<&PreservedOption> {
+        // try exact as provided (direct lookups on self to ensure correct lifetimes)
+        if let Some(idx) = self.preserved_short_flags.get(name) {
+            return self.preserved_options.get(*idx);
+        }
+        if let Some(idx) = self.preserved_long_flags.get(name) {
+            return self.preserved_options.get(*idx);
+        }
+
+        // normalize by trimming existing dashes and try common variants
+        let trimmed = name.trim_start_matches('-');
+        let variants = [
+            format!("-{}", trimmed),
+            format!("--{}", trimmed),
+            trimmed.to_string(),
+        ];
+
+        for v in &variants {
+            if let Some(idx) = self.preserved_short_flags.get(v.as_str()) {
+                return self.preserved_options.get(*idx);
+            }
+            if let Some(idx) = self.preserved_long_flags.get(v.as_str()) {
+                return self.preserved_options.get(*idx);
+            }
+        }
+
+        None
+    }
+
+    pub fn has_preserved_option(&self, name: &str) -> bool {
+        self.get_preserved_option(name).is_some()
+    }
+
     pub fn subcommand(&mut self, name: &str, description: &str) -> &mut FliCommand {
         let command = FliCommand::new(name, description);
         self.add_sub_command(command);
@@ -168,6 +285,7 @@ impl FliCommand {
         // Collect arguments and check for subcommands
         let mut arguments = Vec::new();
         let mut next_subcommand: Option<(&String, Vec<CommandChain>, usize)> = None;
+        let mut preserved_option: Option<&String> = None;
 
         for (idx, item) in chain.iter().enumerate() {
             match item {
@@ -182,6 +300,10 @@ impl FliCommand {
                 }
                 CommandChain::Option(_, _) => {
                     // Options are already processed, just skip
+                }
+                CommandChain::IsPreservedOption(s) => {
+                    // Preserved options are already processed, just skip
+                    preserved_option = Some(s);
                 }
             }
         }
@@ -199,15 +321,28 @@ impl FliCommand {
             }
         }
 
+        let mut callback: Option<fn(&FliCallbackData)> = None;
+        let callback_data = FliCallbackData::new(
+            self.clone(),
+            self.get_option_parser().clone(),
+            arguments,
+            arg_parser,
+        );
+
         // No subcommand, execute this command's callback
-        if let Some(callback) = self.get_callback() {
-            let callback_data = FliCallbackData::new(
-                self.clone(),
-                self.get_option_parser().clone(),
-                arguments,
-                arg_parser,
-            );
-            callback(&callback_data);
+        if let Some(_callback) = self.get_callback() {
+            callback = Some(_callback);
+        }
+
+        if let Some(preserved_name) = preserved_option {
+            if let Some(preserved) = self.get_preserved_option(preserved_name) {
+                // Execute the preserved option's callback
+                callback = Some(preserved.callback);
+            }
+        }
+
+        if let Some(cb) = callback {
+            cb(&callback_data);
         }
 
         Ok(())

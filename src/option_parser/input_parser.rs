@@ -7,6 +7,7 @@ pub enum CommandChain {
     SubCommand(String),
     Option(String, ValueTypes),
     Argument(String),
+    IsPreservedOption(String),
 }
 
 #[derive(Debug, Clone)]
@@ -227,6 +228,15 @@ impl InputArgsParser {
                         );
                     }
                 }
+            }
+
+            if let Some(preserved_option) = command.get_preserved_option(arg) {
+                // It's a preserved option
+                self.command_chain
+                    .push(CommandChain::IsPreservedOption(arg.to_string()));
+                state.set_next_mode(ParseState::InOption)?;
+                i += 1;
+                continue;
             }
 
             // Check if current arg is an option
