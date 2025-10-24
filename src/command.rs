@@ -242,7 +242,6 @@ impl FliCommand {
         self
     }
 
-
     /// Returns the number of expected positional arguments for this command.
     pub fn get_expected_positional_args(&self) -> usize {
         self.expected_positional_args
@@ -262,59 +261,154 @@ impl FliCommand {
     pub fn setup_help_flag(&mut self) {
         self.add_option_with_callback(
             "help",
-            "Show help information",
+            "Display help information",
             "-h",
             "--help",
             ValueTypes::None,
             |data| {
                 let cmd = data.get_command();
 
-                // Print command info
+                // Command header
                 display::print_section(&format!("Command: {}", cmd.get_name()));
-                println!("  {}", cmd.get_description().white());
+                display::print_info(cmd.get_description());
 
-                // Print options table
-                let options = data.option_parser.get_options();
-                if !options.is_empty() {
-                    display::print_section("Options");
-
-                    let headers = vec!["Short", "Long", "Type", "Description"];
-                    let rows: Vec<Vec<&str>> = options
-                        .iter()
-                        .map(|opt| {
-                            let value_type = match &opt.value {
-                                ValueTypes::None => "flag",
-                                ValueTypes::RequiredSingle(_) => "required",
-                                ValueTypes::OptionalSingle(_) => "optional",
-                                ValueTypes::RequiredMultiple(_, _) => "multiple required",
-                                ValueTypes::OptionalMultiple(_, _) => "multiple optional",
-                            };
-                            vec![
-                                opt.short_flag.as_str(),
-                                opt.long_flag.as_str(),
-                                value_type,
-                                opt.description.as_str(),
-                            ]
-                        })
-                        .collect();
-
-                    display::print_table(&headers, &rows, None);
+                // Usage patterns
+                display::print_section("Usage");
+                let usage_patterns = Self::build_usage_patterns(cmd);
+                for pattern in usage_patterns {
+                    display::print_info(&format!("  {}", pattern));
                 }
 
-                // Print subcommands
-                if cmd.has_sub_commands() {
-                    let items: Vec<(&str, &str)> = cmd
-                        .get_sub_commands()
-                        .iter()
-                        .map(|(name, sub_cmd)| (name.as_str(), sub_cmd.get_description().as_str()))
-                        .collect();
+                // Options table
+                Self::print_options_table(&data.option_parser);
 
-                    display::print_item_list(&items, Some("Subcommands"));
-                }
+                // Subcommands
+                Self::print_subcommands_table(cmd);
+
+                // Arguments section
+                // Self::print_arguments_section(cmd);
 
                 std::process::exit(0);
             },
         );
+    }
+
+    /// Build usage pattern strings for the command
+    pub fn build_usage_patterns(cmd: &FliCommand) -> Vec<String> {
+        let name = cmd.get_name();
+        let mut patterns = Vec::new();
+
+        // Basic pattern with options
+        let mut basic = format!("{}", name);
+
+        if cmd.has_sub_commands() {
+            basic.push_str("[SUBCOMMANDS]");
+        }
+
+        // If command can accept positional arguments
+        basic.push_str(" [ARGUMENTS]");
+
+        basic.push_str(" [OPTIONS]");
+
+        patterns.push(basic);
+
+        // Pattern with double-dash separator
+        let with_separator = format!("[SUBCOMMANDS] [OPTIONS] -- [ARGUMENTS]");
+        patterns.push(with_separator);
+
+        patterns
+    }
+
+    /// Print the options table
+    pub fn print_options_table(parser: &CommandOptionsParser) {
+        let options = parser.get_options();
+
+        if options.is_empty() {
+            return;
+        }
+
+        display::print_section("Options");
+
+        let headers = vec!["Flag", "Long Form", "Value Type", "Description"];
+        let rows: Vec<Vec<&str>> = options
+            .iter()
+            .map(|opt| {
+                let value_type = match &opt.value {
+                    ValueTypes::None => "none",
+                    ValueTypes::RequiredSingle(_) => "single (required)",
+                    ValueTypes::OptionalSingle(_) => "single (optional)",
+                    ValueTypes::RequiredMultiple(_, Some(n)) => {
+                        // Store in a thread-local or return a String
+                        return vec![
+                            opt.short_flag.as_str(),
+                            opt.long_flag.as_str(),
+                            Box::leak(format!("multiple (exactly {})", n).into_boxed_str()),
+                            opt.description.as_str(),
+                        ];
+                    }
+                    ValueTypes::RequiredMultiple(_, None) => "multiple (1+)",
+                    ValueTypes::OptionalMultiple(_, Some(n)) => {
+                        return vec![
+                            opt.short_flag.as_str(),
+                            opt.long_flag.as_str(),
+                            Box::leak(format!("multiple (max {})", n).into_boxed_str()),
+                            opt.description.as_str(),
+                        ];
+                    }
+                    ValueTypes::OptionalMultiple(_, None) => "multiple (0+)",
+                };
+
+                vec![
+                    opt.short_flag.as_str(),
+                    opt.long_flag.as_str(),
+                    value_type,
+                    opt.description.as_str(),
+                ]
+            })
+            .collect();
+
+        display::print_table(&headers, &rows, None);
+    }
+
+    /// Print the subcommands table
+    pub fn print_subcommands_table(cmd: &FliCommand) {
+        if !cmd.has_sub_commands() {
+            return;
+        }
+
+        display::print_section("Subcommands");
+
+        let headers = vec!["Command", "Description"];
+        let rows: Vec<Vec<&str>> = cmd
+            .get_sub_commands()
+            .iter()
+            .map(|(name, sub_cmd)| vec![name.as_str(), sub_cmd.get_description().as_str()])
+            .collect();
+
+        display::print_table(&headers, &rows, None);
+
+        display::print_info("Run '<command> --help' for more information on a subcommand");
+    }
+
+    /// Print arguments section explanation
+    pub fn print_arguments_section(cmd: &FliCommand) {
+        display::print_section("Arguments");
+
+        let info = vec![
+            ("Positional", "Arguments passed after all options"),
+            (
+                "After --",
+                "All arguments after '--' separator are treated as positional",
+            ),
+        ];
+
+        display::print_key_value(&info);
+
+        display::print_divider(60, '─', Some(colored::Color::BrightBlack));
+
+        display::print_info("Examples:");
+        display::print_info(&format!("  {} file1.txt file2.txt -v", cmd.get_name()));
+        display::print_info(&format!("  {} -v -- file1.txt file2.txt", cmd.get_name()));
     }
 
     /// Sets the callback function for this command.
