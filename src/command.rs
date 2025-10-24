@@ -1,7 +1,9 @@
 // command.rs
 use std::collections::HashMap;
 
-use crate::option_parser::{CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes};
+use crate::option_parser::{
+    CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes,
+};
 
 #[derive(Debug, Clone)]
 pub struct FliCallbackData {
@@ -10,7 +12,6 @@ pub struct FliCallbackData {
     pub arguments: Vec<String>,
     pub arg_parser: InputArgsParser,
 }
-
 
 impl FliCallbackData {
     pub fn new(
@@ -27,7 +28,29 @@ impl FliCallbackData {
         }
     }
 
-    pub fn get_option(&self, name: &str) -> Option<&ValueTypes> {
+    pub fn get_option_value(&self, name: &str) -> Option<&ValueTypes> {
+        if name.starts_with("-") {
+            return self.option_parser.get_option_expected_value_type(name);
+        }
+
+        // try single-dash prefix
+        let short = format!("-{}", name);
+        if let Some(val) = self.option_parser.get_option_expected_value_type(&short) {
+            return Some(val);
+        }
+
+        println!("long check for name: {}", name);
+
+        // try double-dash prefix
+        let long = format!("--{}", name);
+        if let Some(val) = self.option_parser.get_option_expected_value_type(&long) {
+            println!("Found long option: {} with value {:?}", long, val);
+            return Some(val);
+        }
+
+        println!("fallback check for name: {}", name);
+
+        // fallback to raw name
         self.option_parser.get_option_expected_value_type(name)
     }
 
@@ -82,12 +105,11 @@ impl FliCommand {
         &self.description
     }
 
-
     pub fn get_option_parser_builder(&self) -> &CommandOptionsParserBuilder {
         &self.option_parser_builder
     }
 
-    pub fn get_option_parser(&self) -> CommandOptionsParser {
+    pub fn get_option_parser(&mut self) -> &mut CommandOptionsParser {
         self.option_parser_builder.build()
     }
 
@@ -101,6 +123,10 @@ impl FliCommand {
 
     pub fn get_sub_command(&self, name: &str) -> Option<&FliCommand> {
         self.sub_commands.get(name)
+    }
+
+    pub fn get_sub_command_mut(&mut self, name: &str) -> Option<&mut FliCommand> {
+        self.sub_commands.get_mut(name)
     }
 
     pub fn has_sub_command(&self, name: &str) -> bool {
@@ -120,6 +146,12 @@ impl FliCommand {
         self
     }
 
+    pub fn subcommand(&mut self, name: &str, description: &str) -> &mut FliCommand {
+        let command = FliCommand::new(name, description);
+        self.add_sub_command(command);
+        self.sub_commands.get_mut(name).unwrap()
+    }
+
     pub fn add_sub_command(&mut self, command: FliCommand) {
         self.sub_commands
             .insert(command.get_name().to_owned(), command);
@@ -129,23 +161,25 @@ impl FliCommand {
         self.callback
     }
 
-    pub fn run(&self, mut arg_parser: InputArgsParser) -> Result<(), String> {
+    pub fn run(&mut self, mut arg_parser: InputArgsParser) -> Result<(), String> {
         // Prepare the parser with this command's options
         arg_parser.prepare(self)?;
-        
+
+        println!("Parsed arguments: {:?}", arg_parser.get_command_chain());
+
         let chain = arg_parser.get_parsed_commands_chain().clone();
         let mut chain_iter = chain.iter();
-        
+
         // Collect arguments and check for subcommands
         let mut arguments = Vec::new();
-        let mut next_subcommand: Option<(&String, Vec<CommandChain>)> = None;
-        
+        let mut next_subcommand: Option<(&String, Vec<CommandChain>, usize)> = None;
+
         for (idx, item) in chain.iter().enumerate() {
             match item {
                 CommandChain::SubCommand(sub_name) => {
                     // Found a subcommand, collect remaining chain items
-                    let remaining: Vec<CommandChain> = chain[idx+1..].to_vec();
-                    next_subcommand = Some((sub_name, remaining));
+                    let remaining: Vec<CommandChain> = chain[idx + 1..].to_vec();
+                    next_subcommand = Some((sub_name, remaining, idx));
                     break;
                 }
                 CommandChain::Argument(arg) => {
@@ -156,34 +190,31 @@ impl FliCommand {
                 }
             }
         }
-        
+
         // If there's a subcommand, handle it recursively
-        if let Some((sub_name, remaining_chain)) = next_subcommand {
-            if let Some(sub_command) = self.get_sub_command(sub_name) {
+        if let Some((sub_name, remaining_chain, idx)) = next_subcommand {
+            if let Some(sub_command) = self.get_sub_command_mut(sub_name) {
                 // Create a new parser for the subcommand
-                let mut sub_parser = InputArgsParser::new(
-                    sub_name.clone(),
-                    Vec::new() // We'll reconstruct args from chain
-                );
+                let mut sub_parser = arg_parser.with_remaining_chain(idx);
                 sub_parser.command_chain = remaining_chain;
-                
+
                 return sub_command.run(sub_parser);
             } else {
                 return Err(format!("Unknown subcommand: {}", sub_name));
             }
         }
-        
+
         // No subcommand, execute this command's callback
         if let Some(callback) = self.get_callback() {
             let callback_data = FliCallbackData::new(
                 self.clone(),
-                self.get_option_parser(),
+                self.get_option_parser().clone(),
                 arguments,
                 arg_parser,
             );
             callback(&callback_data);
         }
-        
+
         Ok(())
     }
 }

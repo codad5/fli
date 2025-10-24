@@ -53,6 +53,10 @@ impl Fli {
     pub fn run(&mut self) {
         let args: Vec<String> = std::env::args().collect();
 
+        println!("Running {} version {}", self.name, self.version);
+        println!("{}", self.description);
+        println!("Parsing arguments: {:?}", args);
+
         // Skip the program name
         let command_args = if args.len() > 1 {
             args[1..].to_vec()
@@ -62,6 +66,7 @@ impl Fli {
 
         let parser =
             InputArgsParser::new(self.root_command.get_name().to_string(), command_args);
+            
 
         match self.root_command.run(parser) {
             Ok(_) => {}

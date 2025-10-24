@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use super::value_types::ValueTypes;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct SingleOption {
@@ -26,20 +26,46 @@ impl CommandOptionsParser {
         }
     }
 
+    fn get_option_position(&self, flag: &str) -> Option<usize> {
+        if let Some(&index) = self.short_option_map.get(flag) {
+            Some(index)
+        } else if let Some(&index) = self.long_option_map.get(flag) {
+            Some(index)
+        } else {
+            None
+        }
+    }
+
+    pub fn update_option_value(&mut self, flag: &str, value: ValueTypes) -> Result<(), String> {
+        if let Some(index) = self.get_option_position(flag) {
+            if let Some(option) = self.options.get_mut(index) {
+                option.value = value;
+                Ok(())
+            } else {
+                Err(format!("Option at index {} not found", index))
+            }
+        } else {
+            Err(format!("Option with flag '{}' not found", flag))
+        }
+    }
+
     pub fn add_option(&mut self, option: SingleOption) {
         let index = self.options.len();
-        self.short_option_map.insert(option.short_flag.clone(), index);
+        self.short_option_map
+            .insert(option.short_flag.clone(), index);
         self.long_option_map.insert(option.long_flag.clone(), index);
         self.options.push(option);
     }
 
     pub fn get_option_by_short_flag(&self, flag: &str) -> Option<&SingleOption> {
-        self.short_option_map.get(flag)
+        self.short_option_map
+            .get(flag)
             .and_then(|&index| self.options.get(index))
     }
 
     pub fn get_option_by_long_flag(&self, flag: &str) -> Option<&SingleOption> {
-        self.long_option_map.get(flag)
+        self.long_option_map
+            .get(flag)
             .and_then(|&index| self.options.get(index))
     }
 
@@ -89,7 +115,7 @@ impl CommandOptionsParserBuilder {
         self
     }
 
-    pub fn build(&self) -> CommandOptionsParser {
-        self.option_parser.clone()
+    pub fn build(&mut self) -> &mut CommandOptionsParser {
+        &mut self.option_parser
     }
 }

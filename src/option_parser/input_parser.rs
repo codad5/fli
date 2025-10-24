@@ -14,6 +14,7 @@ pub struct InputArgsParser {
     pub command: String,
     pub args: Vec<String>,
     pub command_chain: Vec<CommandChain>,
+    is_prepared: bool,
 }
 
 impl InputArgsParser {
@@ -29,6 +30,7 @@ impl InputArgsParser {
             command,
             args,
             command_chain: Vec::new(),
+            is_prepared: false,
         }
     }
 
@@ -36,7 +38,11 @@ impl InputArgsParser {
         &self.command_chain
     }
 
-    pub fn prepare(&mut self, command: &FliCommand) -> Result<&mut Self, String> {
+    pub fn prepare(&mut self, command: &mut FliCommand) -> Result<&mut Self, String> {
+        if self.is_prepared {
+            println!("Parser is already prepared");
+            return Ok(self);
+        }
         let mut state = ParseState::Start;
 
         // Verify command name matches
@@ -53,7 +59,7 @@ impl InputArgsParser {
 
         let mut i = 0;
         while i < self.args.len() {
-            let arg = &self.args[i];
+            let arg = &self.args[i].clone();
 
             // Handle the break symbol "--"
             if arg == "--" {
@@ -95,6 +101,10 @@ impl InputArgsParser {
                             option_name.clone(),
                             ValueTypes::RequiredSingle(Value::Str(arg.to_string())),
                         ));
+                        command.get_option_parser().update_option_value(
+                            option_name,
+                            ValueTypes::RequiredSingle(Value::Str(arg.to_string())),
+                        )?;
                         state.set_next_mode(ParseState::InOption)?;
                         i += 1;
                         continue;
@@ -115,6 +125,10 @@ impl InputArgsParser {
                             option_name.clone(),
                             ValueTypes::OptionalSingle(Some(Value::Str(arg.to_string()))),
                         ));
+                        command.get_option_parser().update_option_value(
+                            option_name,
+                            ValueTypes::OptionalSingle(Some(Value::Str(arg.to_string()))),
+                        )?;
                         state.set_next_mode(ParseState::InOption)?;
                         i += 1;
                         continue;
@@ -161,8 +175,12 @@ impl InputArgsParser {
 
                         self.command_chain.push(CommandChain::Option(
                             option_name.clone(),
-                            ValueTypes::RequiredMultiple(values, *expected_count),
+                            ValueTypes::RequiredMultiple(values.clone(), *expected_count),
                         ));
+                        command.get_option_parser().update_option_value(
+                            option_name,
+                            ValueTypes::RequiredMultiple(values, *expected_count),
+                        )?;
                         state.set_next_mode(ParseState::InOption)?;
                         continue; // Don't increment i again, it's already advanced
                     }
@@ -192,8 +210,13 @@ impl InputArgsParser {
                             ValueTypes::OptionalMultiple(Some(values), *expected_count)
                         };
 
-                        self.command_chain
-                            .push(CommandChain::Option(option_name.clone(), option_value));
+                        self.command_chain.push(CommandChain::Option(
+                            option_name.clone(),
+                            option_value.clone(),
+                        ));
+                        command
+                            .get_option_parser()
+                            .update_option_value(option_name, option_value)?;
                         state.set_next_mode(ParseState::InOption)?;
                         continue; // Don't increment i again
                     }
@@ -234,12 +257,19 @@ impl InputArgsParser {
             }
 
             // Check if it's a subcommand
-            if command.has_sub_command(arg) {
+            if let Some(command) = command.get_sub_command_mut(arg) {
+                // self.command_chain
+                //     .push(CommandChain::SubCommand(arg.to_string()));
+                // state.set_next_mode(ParseState::InCommand)?;
+                // i += 1;
+                // continue;
+                // if a sub command update the self.args to be the remaining args, then return self.prepare and pass the sub command
                 self.command_chain
                     .push(CommandChain::SubCommand(arg.to_string()));
-                state.set_next_mode(ParseState::InCommand)?;
-                i += 1;
-                continue;
+                let remaining_args = self.args[i + 1..].to_vec();
+                self.command = arg.to_string();
+                self.args = remaining_args;
+                return self.prepare(command);
             }
 
             // Otherwise, it's an argument
@@ -276,15 +306,16 @@ impl InputArgsParser {
         }
 
         state.set_next_mode(ParseState::End)?;
+        self.is_prepared = true;
         Ok(self)
     }
-
 
     pub fn from_chain(command: String, chain: Vec<CommandChain>) -> Self {
         Self {
             command,
             args: Vec::new(),
             command_chain: chain,
+            is_prepared: true,
         }
     }
 
@@ -295,15 +326,20 @@ impl InputArgsParser {
         } else {
             Vec::new()
         };
-        
+
         Self {
             command: self.command.clone(),
             args: Vec::new(),
             command_chain: remaining_chain,
+            is_prepared: true,
         }
     }
 
     pub fn get_command(&self) -> &String {
         &self.command
+    }
+    
+    pub fn get_command_chain(&self) -> &Vec<CommandChain> {
+        &self.command_chain
     }
 }
