@@ -1,6 +1,7 @@
 use super::parse_state::ParseState;
 use super::value_types::{Value, ValueTypes};
 use crate::command::FliCommand;
+use crate::error::{FliError, Result};
 
 /// Represents elements in the parsed command chain.
 ///
@@ -114,7 +115,7 @@ impl InputArgsParser {
     /// - `AcceptingValue` -> `InOption`: After consuming value(s)
     /// - Any -> `Breaking`: When encountering "--"
     /// - Any -> `End`: When parsing completes
-    pub fn prepare(&mut self, command: &mut FliCommand) -> Result<&mut Self, String> {
+    pub fn prepare(&mut self, command: &mut FliCommand) -> Result<&mut Self> {
         if self.is_prepared {
             println!("Parser is already prepared");
             return Ok(self);
@@ -123,10 +124,9 @@ impl InputArgsParser {
 
         // Verify command name matches
         if self.command != *command.get_name() {
-            return Err(format!(
-                "Command name mismatch: expected '{}', got '{}'",
+            return Err(FliError::command_mismatch(
                 command.get_name(),
-                self.command
+                &self.command,
             ));
         }
 
@@ -146,7 +146,10 @@ impl InputArgsParser {
                         continue;
                     }
                     _ => {
-                        return Err(format!("Unexpected '--' at position {}", i));
+                        return Err(FliError::UnexpectedToken {
+                            token: "--".to_string(),
+                            position: i,
+                        });
                     }
                 }
             }
@@ -166,10 +169,7 @@ impl InputArgsParser {
                     ValueTypes::RequiredSingle(_) => {
                         // Check if next arg is another option (error case)
                         if command.get_option_parser().has_option(arg) {
-                            return Err(format!(
-                                "Expected value for option '{}', but found another option: '{}'",
-                                option_name, arg
-                            ));
+                            return Err(FliError::missing_value(option_name));
                         }
 
                         // Assign the value
@@ -231,21 +231,13 @@ impl InputArgsParser {
 
                         // Validate we got at least one value
                         if values.is_empty() {
-                            return Err(format!(
-                                "Option '{}' requires at least one value",
-                                option_name
-                            ));
+                            return Err(FliError::missing_value(option_name));
                         }
 
                         // Validate expected count if specified
                         if let Some(expected) = expected_count {
                             if values.len() != *expected {
-                                return Err(format!(
-                                    "Option '{}' expected {} value(s), got {}",
-                                    option_name,
-                                    expected,
-                                    values.len()
-                                ));
+                                return Err(FliError::missing_value(option_name));
                             }
                         }
 
@@ -298,9 +290,9 @@ impl InputArgsParser {
                     }
                     ValueTypes::None => {
                         // This shouldn't happen as None options don't accept values
-                        return Err(
-                            "Internal error: AcceptingValue state with None value type".to_string()
-                        );
+                        return Err(FliError::Internal(
+                            "AcceptingValue state with None value type".to_string(),
+                        ));
                     }
                 }
             }
@@ -319,7 +311,7 @@ impl InputArgsParser {
             if option_parser.has_option(arg) {
                 let expected_value_type = option_parser
                     .get_option_expected_value_type(arg)
-                    .ok_or_else(|| format!("Failed to get value type for option: {}", arg))?;
+                    .ok_or_else(|| FliError::OptionNotFound(arg.to_string()))?;
 
                 match expected_value_type {
                     ValueTypes::None => {
@@ -368,10 +360,7 @@ impl InputArgsParser {
         if let ParseState::AcceptingValue(option_name, value_type) = &state {
             match value_type {
                 ValueTypes::RequiredSingle(_) | ValueTypes::RequiredMultiple(_, _) => {
-                    return Err(format!(
-                        "Missing required value for option: '{}'",
-                        option_name
-                    ));
+                    return Err(FliError::missing_value(option_name));
                 }
                 ValueTypes::OptionalSingle(_) | ValueTypes::OptionalMultiple(_, _) => {
                     // It's optional, add it with None
@@ -448,8 +437,8 @@ impl InputArgsParser {
     }
 
     /// Returns the full command chain.
-///
-/// Alias for `get_parsed_commands_chain()` for convenience.
+    ///
+    /// Alias for `get_parsed_commands_chain()` for convenience.
     pub fn get_command_chain(&self) -> &Vec<CommandChain> {
         &self.command_chain
     }

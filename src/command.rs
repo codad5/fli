@@ -5,6 +5,8 @@ use crate::option_parser::{
     CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes,
 };
 
+use crate::error::{FliError, Result};
+
 /// Context data passed to command callbacks containing parsed arguments and options.
 ///
 /// This struct provides a convenient API for accessing parsed command-line data
@@ -533,7 +535,7 @@ impl FliCommand {
     /// - Required option values are missing
     /// - Unknown subcommands are specified
     /// - Option parsing fails
-    pub fn run(&mut self, mut arg_parser: InputArgsParser) -> Result<(), String> {
+    pub fn run(&mut self, mut arg_parser: InputArgsParser) -> Result<()> {
         // Prepare the parser with this command's options
         arg_parser.prepare(self)?;
 
@@ -577,7 +579,7 @@ impl FliCommand {
 
                 return sub_command.run(sub_parser);
             } else {
-                return Err(format!("Unknown subcommand: {}", sub_name));
+                return Err(FliError::UnknownCommand(sub_name.clone()));
             }
         }
 

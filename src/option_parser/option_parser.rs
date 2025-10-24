@@ -1,6 +1,6 @@
 use super::value_types::ValueTypes;
 use std::collections::HashMap;
-
+use crate::error::{FliError, Result};
 /// Represents a single command-line option with its configuration.
 ///
 /// This stores both the definition (flags, description) and the parsed value.
@@ -81,16 +81,16 @@ impl CommandOptionsParser {
     /// # Errors
     ///
     /// Returns an error if the flag doesn't match any registered option.
-    pub fn update_option_value(&mut self, flag: &str, value: ValueTypes) -> Result<(), String> {
+    pub fn update_option_value(&mut self, flag: &str, value: ValueTypes) -> Result<()> {
         if let Some(index) = self.get_option_position(flag) {
             if let Some(option) = self.options.get_mut(index) {
                 option.value = value;
                 Ok(())
             } else {
-                Err(format!("Option at index {} not found", index))
+                Err(FliError::OptionNotFound(flag.to_string()))
             }
         } else {
-            Err(format!("Option with flag '{}' not found", flag))
+            Err(FliError::OptionNotFound(flag.to_string()))
         }
     }
 

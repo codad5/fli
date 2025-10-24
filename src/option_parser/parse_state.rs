@@ -1,5 +1,5 @@
 use super::value_types::ValueTypes;
-
+use crate::error::{FliError, Result};
 /// Represents the current state during argument parsing.
 ///
 /// This enum implements a state machine that enforces valid transitions
@@ -44,7 +44,6 @@ pub enum ParseState {
 }
 
 impl ParseState {
-
     /// Attempts to transition to the next state.
     ///
     /// Validates the transition is legal before applying it.
@@ -69,12 +68,15 @@ impl ParseState {
     /// state.set_next_mode(ParseState::InCommand)?;  // OK
     /// state.set_next_mode(ParseState::Start)?;       // Error: can't go back to Start
     /// ```
-    pub fn set_next_mode(&mut self, next: ParseState) -> Result<&mut Self, String> {
+    pub fn set_next_mode(&mut self, next: ParseState) -> Result<&mut Self> {
         if self.can_go_to_next(&next) {
             *self = next;
             Ok(self)
         } else {
-            Err(format!("Cannot transition from {:?} to {:?}", self, next))
+            Err(FliError::InvalidStateTransition {
+                from: format!("{:?}", self),
+                to: format!("{:?}", next),
+            })
         }
     }
 
