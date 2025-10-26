@@ -1,5 +1,7 @@
 use thiserror::Error;
 
+use crate::command::FliCommand;
+
 /// Errors that can occur during CLI parsing and execution
 #[derive(Debug, Error)]
 pub enum FliError {
@@ -9,7 +11,7 @@ pub enum FliError {
 
     /// Unknown subcommand was specified
     #[error("Unknown command: '{0}'. Run with --help to see available commands")]
-    UnknownCommand(String),
+    UnknownCommand(String, Vec<String>),
 
     /// Unknown option flag was provided
     #[error("Unknown option: '{0}'. Run with --help to see available options")]

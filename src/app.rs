@@ -13,6 +13,7 @@ use crate::{
 /// # Examples
 ///
 /// ```rust
+/// use fli::option_parser::ValueTypes;
 /// use fli::Fli;
 ///
 /// let mut app = Fli::new("myapp", "1.0.0", "A sample CLI application");
@@ -118,6 +119,7 @@ impl Fli {
     /// # Examples
     ///
     /// ```rust
+    /// use fli::option_parser::ValueTypes;
     /// app.add_option("config", "Config file path", "-c", "--config",
     ///                ValueTypes::OptionalSingle(None));
     /// ```
@@ -150,6 +152,7 @@ impl Fli {
     /// # Examples
     ///
     /// ```rust
+    ///  use fli::Fli;
     /// let app = Fli::new("git", "2.0.0", "Distributed version control system");
     /// ```
     pub fn new(name: &str, version: &str, description: &str) -> Self {
@@ -212,13 +215,7 @@ impl Fli {
                     Some("Run with --help for usage information"),
                 );
 
-                if let FliError::UnknownCommand(cmd) = e {
-                    let available: Vec<String> = self
-                        .root_command
-                        .get_sub_commands()
-                        .keys()
-                        .cloned()
-                        .collect();
+                if let FliError::UnknownCommand(cmd, available) = e {
                     display::print_did_you_mean(&cmd, &available);
                 }
                 std::process::exit(1);
@@ -227,14 +224,13 @@ impl Fli {
     }
 }
 
-
 impl Fli {
     /// Enable debug mode for the application
     pub fn with_debug(mut self) -> Self {
         display::enable_debug();
         self
     }
-    
+
     /// Add a debug flag to root command
     pub fn add_debug_option(&mut self) {
         self.add_option(
@@ -244,7 +240,7 @@ impl Fli {
             "--debug",
             ValueTypes::None,
         );
-        
+
         // Check if debug flag is present in args
         if std::env::args().any(|arg| arg == "-D" || arg == "--debug") {
             display::enable_debug();

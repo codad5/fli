@@ -765,7 +765,8 @@ impl FliCommand {
 
                 return sub_command.run(sub_parser);
             } else {
-                return Err(FliError::UnknownCommand(sub_name.clone()));
+                let available: Vec<String> = self.get_sub_commands().keys().cloned().collect();
+                return Err(FliError::UnknownCommand(sub_name.clone(), available));
             }
         }
 

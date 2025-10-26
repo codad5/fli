@@ -19,6 +19,10 @@ categories = [
 ]
 keywords = ["cli", "cli-parser", "parser", "clap", "fli"]
 
+[lib]
+doctest = false
+
+
 [dependencies]
 colored = "2.0.4"
 once_cell = "1.21.3"
