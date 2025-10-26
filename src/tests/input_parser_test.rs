@@ -11,9 +11,9 @@ fn create_test_command() -> FliCommand {
         "Verbose output",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
-    cmd.add_option("quiet", "Quiet mode", "-q", "--quiet", ValueTypes::None);
+    cmd.add_option("quiet", "Quiet mode", "-q", "--quiet", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
     cmd.add_option(
         "output",
         "Output file",
@@ -42,7 +42,7 @@ fn create_test_command() -> FliCommand {
 // Helper function to create a command with subcommands
 fn create_command_with_subcommands() -> FliCommand {
     let mut root = FliCommand::new("app", "Main app");
-    root.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::None);
+    root.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
 
     root.subcommand("start", "Start service").add_option(
         "port",
@@ -57,7 +57,7 @@ fn create_command_with_subcommands() -> FliCommand {
         "Force stop",
         "-f",
         "--force",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     root
@@ -94,10 +94,28 @@ fn test_single_flag_option() {
     match &chain[0] {
         CommandChain::Option(flag, value) => {
             assert_eq!(flag, "-v");
-            assert!(matches!(value, ValueTypes::None));
+            assert!(matches!(value, ValueTypes::OptionalSingle(Some(Value::Bool(true)))));
         }
         _ => panic!("Expected Option variant"),
     }
+}
+
+#[test]
+fn test_option_not_passed_results_in_empty_chain() {
+    // When options with ValueTypes::OptionalSingle(Some(Value::Bool(false))) are NOT passed, they don't appear in chain
+    let args = vec![]; // No -v flag passed
+    let mut parser = InputArgsParser::new("test".to_string(), args);
+    let mut cmd = create_test_command();
+
+    parser.prepare(&mut cmd).unwrap();
+
+    let chain = parser.get_parsed_commands_chain();
+    // Chain should be empty since no arguments were provided
+    assert_eq!(
+        chain.len(),
+        0,
+        "Expected empty chain when no options are passed"
+    );
 }
 
 #[test]
@@ -588,6 +606,151 @@ fn test_short_option_clustering() {
         // Check if it was parsed as two options or handled differently
         assert!(chain.len() >= 1);
     }
+}
+
+// ============================================================================
+// ValueTypes::OptionalSingle(Some(Value::Bool(false))) Design Flaw Tests
+// ============================================================================
+
+#[test]
+fn test_flag_not_passed_but_option_exists() {
+    // FIXED: This test now demonstrates that we CAN detect if a flag was passed
+    // When -v is NOT passed, the value remains Bool(false)
+    let args = vec![]; // NO -v flag
+    let mut parser = InputArgsParser::new("test".to_string(), args);
+    let mut cmd = create_test_command();
+
+    parser.prepare(&mut cmd).unwrap();
+
+    // The chain should be empty since no args were passed
+    let chain = parser.get_parsed_commands_chain();
+    assert_eq!(chain.len(), 0, "Chain should be empty when no args passed");
+
+    // Option exists in definition (expected)
+    let option = cmd.get_option_parser().get_option_by_short_flag("-v");
+    assert!(option.is_some(), "Option exists in definition");
+
+    // The option's value is Bool(false) because it wasn't passed
+    if let Some(opt) = option {
+        assert!(
+            matches!(opt.value, ValueTypes::OptionalSingle(Some(Value::Bool(false)))),
+            "Flag NOT passed: value should be Bool(false)"
+        );
+    }
+
+    // FIXED: We CAN now distinguish:
+    // 1. Flag was defined but not passed → Bool(false)
+    // 2. Flag was defined and passed → Bool(true)
+}
+
+#[test]
+fn test_flag_passed_option_exists() {
+    // When -v IS passed, we should be able to detect it
+    let args = vec!["-v".to_string()];
+    let mut parser = InputArgsParser::new("test".to_string(), args);
+    let mut cmd = create_test_command();
+
+    parser.prepare(&mut cmd).unwrap();
+
+    // The chain should contain the -v option
+    let chain = parser.get_parsed_commands_chain();
+    assert_eq!(chain.len(), 1, "Chain should have -v option");
+
+    match &chain[0] {
+        CommandChain::Option(flag, value) => {
+            assert_eq!(flag, "-v");
+            // FLAG WAS PASSED: Should be Bool(true)
+            assert!(matches!(value, ValueTypes::OptionalSingle(Some(Value::Bool(true)))));
+        }
+        _ => panic!("Expected Option variant"),
+    }
+
+    // The option value in the parser should also be updated to true
+    let option = cmd.get_option_parser().get_option_by_short_flag("-v");
+    assert!(option.is_some(), "Option should exist");
+
+    // FIXED: Now we CAN tell if the flag was passed!
+    // Bool(true) = flag was passed
+    // Bool(false) = flag was not passed
+    if let Some(opt) = option {
+        assert!(
+            matches!(opt.value, ValueTypes::OptionalSingle(Some(Value::Bool(true)))),
+            "Flag was passed, value should be Bool(true)!"
+        );
+    }
+}
+
+#[test]
+fn test_only_chain_can_distinguish_flag_usage() {
+    // WORKAROUND: The only way to know if a flag was passed
+    // is to check the command_chain, not the option parser
+
+    // Case 1: Flag NOT passed
+    let args1 = vec![];
+    let mut parser1 = InputArgsParser::new("test".to_string(), args1);
+    let mut cmd1 = create_test_command();
+    parser1.prepare(&mut cmd1).unwrap();
+
+    let chain1 = parser1.get_parsed_commands_chain();
+    let has_v_in_chain1 = chain1
+        .iter()
+        .any(|item| matches!(item, CommandChain::Option(flag, _) if flag == "-v"));
+    assert!(
+        !has_v_in_chain1,
+        "Chain should NOT contain -v when not passed"
+    );
+
+    // Case 2: Flag IS passed
+    let args2 = vec!["-v".to_string()];
+    let mut parser2 = InputArgsParser::new("test".to_string(), args2);
+    let mut cmd2 = create_test_command();
+    parser2.prepare(&mut cmd2).unwrap();
+
+    let chain2 = parser2.get_parsed_commands_chain();
+    let has_v_in_chain2 = chain2
+        .iter()
+        .any(|item| matches!(item, CommandChain::Option(flag, _) if flag == "-v"));
+    assert!(has_v_in_chain2, "Chain SHOULD contain -v when passed");
+
+    // CONCLUSION: Must check command_chain, not option parser
+}
+
+#[test]
+fn test_valuetypes_none_design_question() {
+    // FIXED: ValueTypes::None has been removed!
+    //
+    // NEW DESIGN: Use ValueTypes::OptionalSingle(Some(Value::Bool(false/true)))
+    //    - Bool(false) = flag was NOT passed (default)
+    //    - Bool(true) = flag WAS passed
+    //
+    // Benefits:
+    // 1. Can check flag status by querying option parser directly
+    // 2. No need to search command chain
+    // 3. Clear semantics: true = on, false = off
+    // 4. Type-safe and idiomatic Rust
+
+    let args = vec![];
+    let mut parser = InputArgsParser::new("test".to_string(), args);
+    let mut cmd = create_test_command();
+    parser.prepare(&mut cmd).unwrap();
+
+    // NEW: Can now query cmd directly for "was -v used?"
+    let option = cmd.get_option_parser().get_option_by_short_flag("-v");
+    let was_v_used = if let Some(opt) = option {
+        matches!(opt.value, ValueTypes::OptionalSingle(Some(Value::Bool(true))))
+    } else {
+        false
+    };
+
+    assert!(!was_v_used, "Flag was not passed, value is Bool(false)");
+
+    // Can also check via chain for consistency
+    let was_v_in_chain = parser
+        .get_parsed_commands_chain()
+        .iter()
+        .any(|item| matches!(item, CommandChain::Option(flag, _) if flag == "-v"));
+
+    assert!(!was_v_in_chain, "Flag not in chain either");
 }
 
 // ============================================================================

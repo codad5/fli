@@ -144,9 +144,9 @@ impl PartialEq for Value {
 /// # Examples
 ///
 /// ```rust
-/// use fli:: option_parser::{Value, ValueTypes|;
-/// // Flag option (no value)
-/// let verbose = ValueTypes::None;
+/// use fli::option_parser::{Value, ValueTypes};
+/// // Flag option (no value) - use Bool(false) as default
+/// let verbose = ValueTypes::OptionalSingle(Some(Value::Bool(false)));
 ///
 /// // Required single value
 /// let output = ValueTypes::RequiredSingle(Value::Str(String::new()));
@@ -171,6 +171,7 @@ pub enum ValueTypes {
 
     /// Optionally accepts one value
     /// - First field: default value if not provided
+    /// - For flag options, use `OptionalSingle(Some(Value::Bool(false)))`
     OptionalSingle(Option<Value>),
 
     /// Requires at least one value, optionally up to a maximum
@@ -182,9 +183,6 @@ pub enum ValueTypes {
     /// - First field: collected values if any
     /// - Second field: maximum count (None = unlimited)
     OptionalMultiple(Option<Vec<Value>>, Option<usize>),
-
-    /// Flag option that doesn't accept values
-    None,
 }
 
 impl ValueTypes {
@@ -192,23 +190,26 @@ impl ValueTypes {
     ///
     /// # Returns
     ///
-    /// `true` for all types except `None`
+    /// `true` for types that require values, `false` for flags
     ///
     /// # Examples
     ///
     /// ```rust
-    ///  use fli::option_parser::ValueTypes;
-    /// 
-    /// assert_eq!(ValueTypes::None.expects_value(), false);
-    /// assert_eq!(ValueTypes::RequiredSingle(Value::Str(s)).expects_value(), true);
+    /// use fli::option_parser::{Value, ValueTypes};
+    ///
+    /// // Flag option (Bool) - doesn't expect argument after the flag
+    /// assert_eq!(ValueTypes::OptionalSingle(Some(Value::Bool(false))).expects_value(), false);
+    ///
+    /// // String option - expects an argument
+    /// assert_eq!(ValueTypes::RequiredSingle(Value::Str(String::new())).expects_value(), true);
     /// ```
     pub fn expects_value(&self) -> bool {
         match self {
             ValueTypes::RequiredSingle(_) => true,
+            ValueTypes::OptionalSingle(Some(Value::Bool(_))) => false, // Flags don't expect values
             ValueTypes::OptionalSingle(_) => true,
             ValueTypes::RequiredMultiple(_, _) => true,
             ValueTypes::OptionalMultiple(_, _) => true,
-            ValueTypes::None => false,
         }
     }
 
@@ -222,11 +223,13 @@ impl ValueTypes {
     /// # Examples
     ///
     /// ```rust
+    /// use fli::option_parser::{Value, ValueTypes};
     /// let val = ValueTypes::RequiredSingle(Value::Str("hello".to_string()));
     /// assert_eq!(val.as_str(), Some("hello"));
     ///
-    /// let val = ValueTypes::None;
-    /// assert_eq!(val.as_str(), None);
+    /// // Flag option returns None (it's a Bool, not a String)
+    /// let flag = ValueTypes::OptionalSingle(Some(Value::Bool(true)));
+    /// assert_eq!(flag.as_str(), None);
     /// ```
     pub fn as_str(&self) -> Option<&str> {
         match self {

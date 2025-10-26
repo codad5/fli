@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.0] - 2025-10-26
 
+### ⚠️ BREAKING CHANGES
+
+1. **`ValueTypes::None` has been REMOVED**
+   - **Reason**: Critical design flaw - impossible to distinguish between "flag defined" and "flag passed"
+   - **Migration**: Replace all `ValueTypes::None` with `ValueTypes::OptionalSingle(Some(Value::Bool(false)))`
+   - **How to check if flag was passed**:
+     - When flag is **not passed**: value remains `Bool(false)`
+     - When flag is **passed**: value is updated to `Bool(true)`
+   - See [Migration Guide in README](README.md#migration-from-valuetypesnone) for details
+
+2. **`add_option_with_callback()` signature changed**
+   - **Added parameter**: `stop_main_callback: bool`
+   - Existing calls must specify whether the callback should stop main execution
+   - Example: `.add_option_with_callback("help", "Help", "-h", "--help", ValueTypes::OptionalSingle(Some(Value::Bool(false))), true, callback)`
+
 ### Added
 
 - **Inheritable options feature** - Allows parent commands to share options with subcommands
@@ -25,8 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - When `true` (e.g., --help, --version): executes the preserved callback and exits immediately
   - When `false` (e.g., --debug): executes the preserved callback and then continues to the main callback
   - Enables options like `--debug` that configure state without halting execution
-- **Comprehensive test coverage** - Added 20 new test cases covering:
-  - Single and multiple option inheritance
+- **Comprehensive test coverage** - Added 30 new test cases covering:
+  - Single and multiple option inheritance (20 tests)
+  - Input parser command chain prediction (25 tests)
+  - ValueTypes::None design flaw demonstrations (4 tests)
   - Nested subcommand inheritance
   - Error handling for non-existent options
   - Independent option copies for each subcommand
@@ -38,12 +55,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses `inheritable_options_builder()` internally to clone marked options
   - Maintains backward compatibility with existing code
 - **Simplified `Fli::command()` method** - Now uses `subcommand()` for automatic inheritance
-- **Updated `add_option_with_callback()` signature** - Added `stop_main_callback` parameter
-  - **Breaking change**: Existing calls must specify whether the callback should stop main execution
-  - Example: `.add_option_with_callback("help", "Help", "-h", "--help", ValueTypes::None, true, callback)`
 - **Improved `add_debug_option()` implementation** - Now uses `add_option_with_callback` with `stop_main_callback: false`
   - Allows --debug flag to configure debug mode and still run the main command
   - Removes the manual argument checking that ran before the app starts
+- **Flag option handling** - Flags now use `Bool(true/false)` to properly track usage state
+  - Parser sets flag value to `Bool(true)` when encountered in arguments
+  - Enables checking flag status via option parser, not just command chain
+  - Help display shows "flag" instead of "none" for flag-type options
+
+### Fixed
+
+- **Critical bug**: `ValueTypes::None` could not distinguish between defined and passed flags
+  - Now using `Bool(false)` (default) vs `Bool(true)` (passed) provides clear state tracking
+  - Applications can now reliably check if a flag was actually used
+- **Parser state machine** - Fixed unreachable pattern warning in value acceptance logic
 
 ### Examples
 
@@ -53,8 +78,8 @@ use fli::option_parser::ValueTypes;
 
 // Parent command with common options
 let mut app = Fli::new("myapp", "1.0.0", "My application");
-app.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
-app.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+app.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+app.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
 
 // Mark options as inheritable using convenient Fli methods
 app.mark_inheritable_many(&["-v", "-q"]).unwrap();
@@ -72,7 +97,7 @@ use fli::command::FliCommand;
 use fli::option_parser::ValueTypes;
 
 let mut parent = FliCommand::new("parent", "Parent command");
-parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::None);
+parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
 parent.get_option_parser().mark_inheritable("-v").unwrap();
 
 // Subcommand automatically inherits -v
@@ -134,7 +159,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
 #### Type System
 
 - **Type-safe value parsing** with explicit `ValueTypes` enum
-  - `ValueTypes::None` - Flag options with no values
+  - `ValueTypes::OptionalSingle(Some(Value::Bool(false)))` - Flag options with no values
   - `ValueTypes::RequiredSingle(Value)` - Single required value
   - `ValueTypes::OptionalSingle(Option<Value>)` - Single optional value
   - `ValueTypes::RequiredMultiple(Vec<Value>, Option<usize>)` - Multiple required values with optional count constraint

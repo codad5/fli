@@ -38,7 +38,7 @@ fn main() {
         "Enable verbose output for all operations",
         "-v",
         "--verbose",
-        ValueTypes::None, // Flag option (no value required)
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))), // Flag option (no value required)
     );
 
     app.add_option(
@@ -46,7 +46,7 @@ fn main() {
         "Suppress all non-error output",
         "-q",
         "--quiet",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     app.add_option(
@@ -76,21 +76,21 @@ fn main() {
             "Show hidden files (starting with .)",
             "-a",
             "--all",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "long",
             "Use long listing format with details",
             "-l",
             "--long",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "human",
             "Print human-readable sizes (e.g., 1K, 234M)",
             "-h",
             "--human-readable",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "sort",
@@ -194,7 +194,7 @@ fn main() {
             "Create parent directories as needed (like mkdir -p)",
             "-p",
             "--parents",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "mode",
@@ -245,21 +245,21 @@ fn main() {
             "Remove directories and their contents recursively",
             "-r",
             "--recursive",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "force",
             "Ignore nonexistent files, never prompt",
             "-f",
             "--force",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "interactive",
             "Prompt before every removal",
             "-i",
             "--interactive",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .set_expected_positional_args(1)
         .set_callback(|data| {
@@ -338,21 +338,21 @@ fn main() {
             "Copy directories recursively",
             "-r",
             "--recursive",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "force",
             "Overwrite existing files without prompting",
             "-f",
             "--force",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "preserve",
             "Preserve file attributes (timestamps, permissions)",
             "-p",
             "--preserve",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .set_expected_positional_args(2) // source(s) and destination
         .set_callback(|data| {
@@ -436,21 +436,21 @@ fn main() {
             "Overwrite existing files without prompting",
             "-f",
             "--force",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "interactive",
             "Prompt before overwriting",
             "-i",
             "--interactive",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "no-clobber",
             "Don't overwrite existing files",
             "-n",
             "--no-clobber",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .set_expected_positional_args(2)
         .set_callback(|data| {
@@ -522,14 +522,14 @@ fn main() {
             "Number all output lines",
             "-n",
             "--number",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "show-ends",
             "Display $ at end of each line",
             "-E",
             "--show-ends",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .set_expected_positional_args(1)
         .set_callback(|data| {
@@ -712,13 +712,13 @@ fn main() {
 
     app.command("tree", "Display directory tree structure")
         .unwrap()
-        .add_option("all", "Show hidden files", "-a", "--all", ValueTypes::None)
+        .add_option("all", "Show hidden files", "-a", "--all", ValueTypes::OptionalSingle(Some(Value::Bool(false))))
         .add_option(
             "dirs-only",
             "List directories only",
             "-d",
             "--dirs-only",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "level",

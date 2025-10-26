@@ -5,7 +5,8 @@ use colored::Colorize;
 
 use crate::display;
 use crate::option_parser::{
-    CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes,
+    CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, Value,
+    ValueTypes,
 };
 
 use crate::error::{FliError, Result};
@@ -329,7 +330,7 @@ impl FliCommand {
             "Display help information",
             "-h",
             "--help",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
             true,
             |data| {
                 let cmd = data.get_command();
@@ -429,7 +430,7 @@ impl FliCommand {
             .iter()
             .map(|opt| {
                 let value_type = match &opt.value {
-                    ValueTypes::None => "none",
+                    ValueTypes::OptionalSingle(Some(Value::Bool(_))) => "flag",
                     ValueTypes::RequiredSingle(_) => "single (required)",
                     ValueTypes::OptionalSingle(_) => "single (optional)",
                     ValueTypes::RequiredMultiple(_, Some(n)) => {

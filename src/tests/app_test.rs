@@ -41,7 +41,7 @@ fn test_add_option_to_app() {
         "Enable verbose output",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     assert!(app.root_command.get_option_parser().has_option("-v"));
@@ -52,7 +52,7 @@ fn test_add_option_to_app() {
 fn test_add_multiple_options() {
     let mut app = Fli::new("cli", "1.0.0", "CLI app");
 
-    app.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::None);
+    app.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
     app.add_option(
         "output",
         "Output file",
@@ -60,7 +60,7 @@ fn test_add_multiple_options() {
         "--output",
         ValueTypes::RequiredSingle(Value::Str(String::new())),
     );
-    app.add_option("quiet", "Quiet mode", "-q", "--quiet", ValueTypes::None);
+    app.add_option("quiet", "Quiet mode", "-q", "--quiet", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
 
     let parser = app.root_command.get_option_parser();
     // 3 options + 1 default help option = 4
@@ -139,7 +139,7 @@ fn test_command_chaining() {
             "Release mode",
             "-r",
             "--release",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         );
         Ok(cmd)
     });
@@ -177,7 +177,7 @@ fn test_mark_inheritable_single_option() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     // Mark it as inheritable
@@ -204,16 +204,16 @@ fn test_mark_inheritable_many_options() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
     app.add_option(
         "quiet",
         "Suppress output",
         "-q",
         "--quiet",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
-    app.add_option("color", "Enable colors", "-c", "--color", ValueTypes::None);
+    app.add_option("color", "Enable colors", "-c", "--color", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
 
     // Mark them all as inheritable
     let result = app.mark_inheritable_many(&["-v", "-q", "-c"]);
@@ -230,7 +230,7 @@ fn test_mark_inheritable_many_with_invalid_option() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     // Try to mark multiple, including non-existent ones
@@ -248,14 +248,14 @@ fn test_subcommand_inherits_options() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
     app.add_option(
         "quiet",
         "Suppress output",
         "-q",
         "--quiet",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     // Mark them as inheritable
@@ -284,7 +284,7 @@ fn test_multiple_subcommands_inherit_same_options() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
     app.mark_inheritable("-v").unwrap();
 
@@ -324,7 +324,7 @@ fn test_inherited_options_dont_affect_parent() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
     app.mark_inheritable("-v").unwrap();
 
@@ -340,7 +340,7 @@ fn test_inherited_options_dont_affect_parent() {
         "Release build",
         "-r",
         "--release",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     // Subcommand should have both its own and inherited options
@@ -358,7 +358,7 @@ fn test_mark_inheritable_using_long_flag() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None,
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
 
     // Mark using long flag

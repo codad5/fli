@@ -2,7 +2,7 @@ use crate::{
     command::{FliCallbackData, FliCommand},
     display,
     error::{FliError, Result},
-    option_parser::{InputArgsParser, ValueTypes},
+    option_parser::{InputArgsParser, Value, ValueTypes},
 };
 
 /// The main application struct for building CLI applications.
@@ -316,13 +316,13 @@ impl Fli {
             "Enable debug output",
             "-D",
             "--debug",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
             false,
             |data| {
                 display::enable_debug();
             },
         );
-        
+
         self.mark_inheritable("--debug").unwrap();
 
         // Check if debug flag is present in args

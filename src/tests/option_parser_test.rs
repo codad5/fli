@@ -9,7 +9,7 @@ fn test_single_option_creation() {
         description: "Enable verbose output".to_string(),
         short_flag: "-v".to_string(),
         long_flag: "--verbose".to_string(),
-        value: ValueTypes::None,
+        value: ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     };
 
     assert_eq!(option.name, "verbose");
@@ -46,7 +46,7 @@ fn test_get_option_by_short_flag() {
         description: "Enable verbose".to_string(),
         short_flag: "-v".to_string(),
         long_flag: "--verbose".to_string(),
-        value: ValueTypes::None,
+        value: ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     };
 
     parser.add_option(option);
@@ -82,7 +82,7 @@ fn test_has_option() {
         description: "Show help".to_string(),
         short_flag: "-h".to_string(),
         long_flag: "--help".to_string(),
-        value: ValueTypes::None,
+        value: ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     };
 
     parser.add_option(option);
@@ -120,7 +120,7 @@ fn test_update_option_value() {
 fn test_update_nonexistent_option() {
     let mut parser = CommandOptionsParser::new();
 
-    let result = parser.update_option_value("-x", ValueTypes::None);
+    let result = parser.update_option_value("-x", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
     assert!(result.is_err());
 }
 
@@ -151,7 +151,7 @@ fn test_builder_pattern() {
             "Enable verbose output",
             "-v",
             "--verbose",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
         )
         .add_option(
             "output",
@@ -171,7 +171,7 @@ fn test_builder_pattern() {
 fn test_builder_chaining() {
     let mut builder = CommandOptionsParserBuilder::new();
     let parser = builder
-        .add_option("debug", "Debug mode", "-d", "--debug", ValueTypes::None)
+        .add_option("debug", "Debug mode", "-d", "--debug", ValueTypes::OptionalSingle(Some(Value::Bool(false))))
         .add_option(
             "level",
             "Log level",
@@ -193,7 +193,7 @@ fn test_multiple_options_different_flags() {
         description: "Option 1".to_string(),
         short_flag: "-a".to_string(),
         long_flag: "--alpha".to_string(),
-        value: ValueTypes::None,
+        value: ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     });
 
     parser.add_option(SingleOption {
@@ -201,7 +201,7 @@ fn test_multiple_options_different_flags() {
         description: "Option 2".to_string(),
         short_flag: "-b".to_string(),
         long_flag: "--beta".to_string(),
-        value: ValueTypes::None,
+        value: ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     });
 
     assert_eq!(parser.get_options().len(), 2);
@@ -219,7 +219,7 @@ fn test_parser_clone() {
         description: "Test option".to_string(),
         short_flag: "-t".to_string(),
         long_flag: "--test".to_string(),
-        value: ValueTypes::None,
+        value: ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     });
 
     let cloned = parser.clone();
