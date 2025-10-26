@@ -116,10 +116,14 @@ fn main() {
                 .and_then(|v| v.as_str())
                 .unwrap_or("name");
 
+            
+            let verbose = if let Some(ValueTypes::OptionalSingle(Some(Value::Bool(v)))) = data.get_option_value("verbose") {
+                v.clone()
+            } else {
+                false
+            };
+            
             println!("Verbose: {:?}", verbose);
-
-            let verbose = data.get_option_value("verbose").is_some();
-
             if verbose {
                 println!("{} Listing directory: {}", "→".cyan(), path.yellow());
                 println!("{} Sort by: {}", "→".cyan(), sort_by.yellow());
