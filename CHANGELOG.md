@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-10-26
+
+### Added
+
+- **Inheritable options feature** - Allows parent commands to share options with subcommands
+  - `mark_inheritable(&mut self, flag: &str) -> Result<()>` - Marks a single option as inheritable
+  - `mark_inheritable_many<I, S>(&mut self, flags: I) -> Result<()>` - Marks multiple options as inheritable
+  - `inheritable_options_builder(&self) -> CommandOptionsParserBuilder` - Creates a builder with only inheritable options
+  - `FliCommand::with_parser(name, description, builder)` - Creates commands with pre-configured option parsers
+- **Automatic option inheritance** in subcommands
+  - Subcommands created via `subcommand()` now automatically inherit options marked as inheritable from parent commands
+  - Eliminates code duplication for common options (e.g., verbose, quiet, color flags)
+  - Each subcommand receives its own copy of inherited options
+
+### Changed
+
+- **Enhanced `subcommand()` method** - Now automatically propagates inheritable options from parent to child commands
+  - Uses `inheritable_options_builder()` internally to clone marked options
+  - Maintains backward compatibility with existing code
+
+### Examples
+
+```rust
+use fli::command::FliCommand;
+use fli::option_parser::ValueTypes;
+
+// Parent command with common options
+let mut app = FliCommand::new("myapp", "My application");
+app.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
+app.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+
+// Mark options as inheritable
+app.parser_mut().mark_inheritable_many(&["-v", "-q"]).unwrap();
+
+// All subcommands automatically inherit -v and -q
+app.subcommand("start", "Start the service");
+app.subcommand("stop", "Stop the service");
+// Both subcommands now have -v/--verbose and -q/--quiet options
+```
+
 ## [1.1.1] - 2025-10-26
 
 ### Changed

@@ -58,6 +58,16 @@ fn main() {
     );
 
     // ============================================================================
+    // MARK OPTIONS AS INHERITABLE
+    // ============================================================================
+    // These options will be automatically available in all subcommands
+    // This eliminates the need to redefine common options for each command
+    app.root_command
+        .get_option_parser()
+        .mark_inheritable_many(&["-v", "-q", "-c"])
+        .expect("Failed to mark options as inheritable");
+
+    // ============================================================================
     // COMMAND: ls - List directory contents
     // ============================================================================
 

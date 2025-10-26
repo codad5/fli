@@ -55,12 +55,8 @@ impl Fli {
     ///                ValueTypes::RequiredSingle(Value::Int(8080)));
     /// ```
     pub fn command(&mut self, name: &str, description: &str) -> Result<&mut FliCommand> {
-        let command = FliCommand::new(name, description);
-        self.add_command(command);
-        self.root_command
-            .sub_commands
-            .get_mut(name)
-            .ok_or_else(|| FliError::Internal("Failed to get command after insertion".to_string()))
+        // Use subcommand() to automatically inherit options
+        Ok(self.root_command.subcommand(name, description))
     }
 
     /// Adds a pre-configured command to the application.
