@@ -58,32 +58,28 @@ impl Value {
                 *s = new_value.to_string();
                 Ok(self.clone())
             }
-            Value::Int(i) => {
-                match new_value.parse::<i64>() {
-                    Ok(v) => {
-                        *i = v;
-                        Ok(self.clone())
-                    }
-                    Err(e) => Err(FliError::ValueParseError {
-                        value: new_value.to_string(),
-                        expected_type: "integer (i64)".to_string(),
-                        reason: e.to_string(),
-                    }),
+            Value::Int(i) => match new_value.parse::<i64>() {
+                Ok(v) => {
+                    *i = v;
+                    Ok(self.clone())
                 }
-            }
-            Value::Float(f) => {
-                match new_value.parse::<f64>() {
-                    Ok(v) => {
-                        *f = v;
-                        Ok(self.clone())
-                    }
-                    Err(e) => Err(FliError::ValueParseError {
-                        value: new_value.to_string(),
-                        expected_type: "float (f64)".to_string(),
-                        reason: e.to_string(),
-                    }),
+                Err(e) => Err(FliError::ValueParseError {
+                    value: new_value.to_string(),
+                    expected_type: "integer (i64)".to_string(),
+                    reason: e.to_string(),
+                }),
+            },
+            Value::Float(f) => match new_value.parse::<f64>() {
+                Ok(v) => {
+                    *f = v;
+                    Ok(self.clone())
                 }
-            }
+                Err(e) => Err(FliError::ValueParseError {
+                    value: new_value.to_string(),
+                    expected_type: "float (f64)".to_string(),
+                    reason: e.to_string(),
+                }),
+            },
             Value::Bool(b) => {
                 let v = match new_value.to_ascii_lowercase().as_str() {
                     "true" | "t" | "1" | "yes" | "y" => Some(true),
