@@ -26,7 +26,6 @@ fn main() {
             let times = data.get_option_value("times")
                 .and_then(|v| match v {
                     ValueTypes::OptionalSingle(Some(Value::Int(n))) => Some(*n),
-                    ValueTypes::OptionalSingle(Some(Value::Str(n))) => Some(n.parse().unwrap_or(1)),
                     _ => None,
                 })
                 .unwrap_or(1);
