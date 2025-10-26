@@ -133,18 +133,16 @@ fn test_multiple_commands() {
 fn test_command_chaining() {
     let mut app = Fli::new("cli", "1.0.0", "CLI app");
 
-    let result = app
-        .command("build", "Build project")
-        .and_then(|cmd| {
-            cmd.add_option(
-                "release",
-                "Release mode",
-                "-r",
-                "--release",
-                ValueTypes::None,
-            );
-            Ok(cmd)
-        });
+    let result = app.command("build", "Build project").and_then(|cmd| {
+        cmd.add_option(
+            "release",
+            "Release mode",
+            "-r",
+            "--release",
+            ValueTypes::None,
+        );
+        Ok(cmd)
+    });
 
     assert!(result.is_ok());
 }

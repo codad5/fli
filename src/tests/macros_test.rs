@@ -32,7 +32,7 @@ fn test_init_fli_from_toml_description() {
 #[test]
 fn test_init_fli_from_toml_returns_fli() {
     let app = crate::init_fli_from_toml!();
-    
+
     // Should be able to use Fli methods
     assert_eq!(app.root_command.get_name(), "");
 }
@@ -49,7 +49,7 @@ fn test_init_fli_from_toml_multiple_calls() {
 #[test]
 fn test_init_fli_from_toml_can_add_commands() {
     let mut app = crate::init_fli_from_toml!();
-    
+
     let result = app.command("test", "Test command");
     assert!(result.is_ok());
 }
@@ -57,9 +57,9 @@ fn test_init_fli_from_toml_can_add_commands() {
 #[test]
 fn test_init_fli_from_toml_can_add_options() {
     use crate::option_parser::ValueTypes;
-    
+
     let mut app = crate::init_fli_from_toml!();
     app.add_option("test", "Test option", "-t", "--test", ValueTypes::None);
-    
+
     assert!(app.root_command.get_option_parser().has_option("-t"));
 }

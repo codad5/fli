@@ -98,7 +98,7 @@ fn test_as_strings_with_required_multiple() {
         Value::Str("file3.txt".to_string()),
     ];
     let vt = ValueTypes::RequiredMultiple(values, None);
-    
+
     let strings = vt.as_strings().unwrap();
     assert_eq!(strings.len(), 3);
     assert_eq!(strings[0], "file1.txt");
@@ -113,7 +113,7 @@ fn test_as_strings_with_optional_multiple() {
         Value::Str("arg2".to_string()),
     ];
     let vt = ValueTypes::OptionalMultiple(Some(values), None);
-    
+
     let strings = vt.as_strings().unwrap();
     assert_eq!(strings.len(), 2);
     assert_eq!(strings[0], "arg1");
@@ -141,7 +141,7 @@ fn test_as_strings_filters_non_strings() {
         Value::Bool(true),
     ];
     let vt = ValueTypes::RequiredMultiple(values, None);
-    
+
     let strings = vt.as_strings().unwrap();
     assert_eq!(strings.len(), 2);
     assert_eq!(strings[0], "string1");
@@ -152,7 +152,7 @@ fn test_as_strings_filters_non_strings() {
 fn test_value_clone() {
     let value1 = Value::Str("test".to_string());
     let value2 = value1.clone();
-    
+
     match (value1, value2) {
         (Value::Str(s1), Value::Str(s2)) => assert_eq!(s1, s2),
         _ => panic!("Clone failed"),
@@ -163,6 +163,6 @@ fn test_value_clone() {
 fn test_value_types_clone() {
     let vt1 = ValueTypes::RequiredSingle(Value::Int(100));
     let vt2 = vt1.clone();
-    
+
     assert!(vt2.expects_value());
 }

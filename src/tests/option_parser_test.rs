@@ -106,10 +106,7 @@ fn test_update_option_value() {
 
     parser.add_option(option);
 
-    let result = parser.update_option_value(
-        "-p",
-        ValueTypes::RequiredSingle(Value::Int(3000)),
-    );
+    let result = parser.update_option_value("-p", ValueTypes::RequiredSingle(Value::Int(3000)));
     assert!(result.is_ok());
 
     let updated = parser.get_option_by_short_flag("-p").unwrap();
@@ -122,11 +119,8 @@ fn test_update_option_value() {
 #[test]
 fn test_update_nonexistent_option() {
     let mut parser = CommandOptionsParser::new();
-    
-    let result = parser.update_option_value(
-        "-x",
-        ValueTypes::None,
-    );
+
+    let result = parser.update_option_value("-x", ValueTypes::None);
     assert!(result.is_err());
 }
 

@@ -4,9 +4,8 @@ macro_rules! init_fli_from_toml {
         let app = $crate::Fli::new(
             env!("CARGO_PKG_NAME"),
             env!("CARGO_PKG_VERSION"),
-            env!("CARGO_PKG_DESCRIPTION")
+            env!("CARGO_PKG_DESCRIPTION"),
         );
         app
     }};
 }
-
