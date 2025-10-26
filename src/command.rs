@@ -5,7 +5,8 @@ use colored::Colorize;
 
 use crate::display;
 use crate::option_parser::{
-    CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, ValueTypes,
+    CommandChain, CommandOptionsParser, CommandOptionsParserBuilder, InputArgsParser, Value,
+    ValueTypes,
 };
 
 use crate::error::{FliError, Result};
@@ -175,6 +176,10 @@ pub struct PreservedOption {
     pub short_flag: String,
     pub value_type: ValueTypes,
     pub callback: fn(&FliCallbackData),
+    /// If true, invoking this preserved option will prevent the command's main
+    /// callback from running; if false, both the preserved option callback and
+    /// the main callback will run.
+    pub stop_main_callback: bool,
 }
 
 /// Represents a CLI command with options, subcommands, and execution logic.
@@ -204,6 +209,7 @@ pub struct FliCommand {
     pub preserved_short_flags: HashMap<String, usize>, // map short flag to index in preserved_options
     pub preserved_long_flags: HashMap<String, usize>, // map long flag to index in preserved_options
     pub expected_positional_args: usize,
+    pub inheritable_options: Vec<usize>,
 }
 
 impl FliCommand {
@@ -229,6 +235,66 @@ impl FliCommand {
             preserved_short_flags: HashMap::new(),
             preserved_long_flags: HashMap::new(),
             expected_positional_args: 0,
+            inheritable_options: Vec::new(),
+        };
+        x.setup_help_flag();
+        x
+    }
+
+    /// Creates a new command with a pre-configured option parser builder.
+    ///
+    /// This method is useful for creating subcommands that inherit options from their
+    /// parent command. It initializes the command with options from the provided builder,
+    /// typically obtained via `parser.inheritable_options_builder()`.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The command name (used to invoke it)
+    /// * `description` - Help text describing the command
+    /// * `parser_builder` - A pre-configured `CommandOptionsParserBuilder` with inherited options
+    ///
+    /// # Returns
+    ///
+    /// A new `FliCommand` with auto-generated help flag and inherited options
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fli::command::FliCommand;
+    /// use fli::option_parser::{CommandOptionsParser, ValueTypes};
+    ///
+    /// // Parent command with options
+    /// let mut parent_parser = CommandOptionsParser::new();
+    /// parent_parser.add_option("verbose", "Enable verbose", "-v", "--verbose", ValueTypes::None);
+    /// parent_parser.mark_inheritable("-v").unwrap();
+    ///
+    /// // Create subcommand that inherits the -v option
+    /// let builder = parent_parser.inheritable_options_builder();
+    /// let subcmd = FliCommand::with_parser("child", "Child command", builder);
+    /// // The child command now has -v/--verbose option automatically
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// - The help flag is automatically added
+    /// - Options from the builder are cloned into the new command
+    /// - This is typically called internally when creating subcommands
+    pub fn with_parser(
+        name: &str,
+        description: &str,
+        parser_builder: CommandOptionsParserBuilder,
+    ) -> Self {
+        let mut x = Self {
+            name: name.to_owned(),
+            description: description.to_owned(),
+            sub_commands: HashMap::new(),
+            callback: None,
+            option_parser_builder: parser_builder,
+            preserved_options: Vec::new(),
+            preserved_short_flags: HashMap::new(),
+            preserved_long_flags: HashMap::new(),
+            expected_positional_args: 0,
+            inheritable_options: Vec::new(),
         };
         x.setup_help_flag();
         x
@@ -264,7 +330,8 @@ impl FliCommand {
             "Display help information",
             "-h",
             "--help",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+            true,
             |data| {
                 let cmd = data.get_command();
 
@@ -363,7 +430,7 @@ impl FliCommand {
             .iter()
             .map(|opt| {
                 let value_type = match &opt.value {
-                    ValueTypes::None => "none",
+                    ValueTypes::OptionalSingle(Some(Value::Bool(_))) => "flag",
                     ValueTypes::RequiredSingle(_) => "single (required)",
                     ValueTypes::OptionalSingle(_) => "single (optional)",
                     ValueTypes::RequiredMultiple(_, Some(n)) => {
@@ -568,6 +635,7 @@ impl FliCommand {
         short_flag: &str,
         long_flag: &str,
         value: ValueTypes,
+        stop_main_callback: bool,
         callback: fn(&FliCallbackData),
     ) -> &mut Self {
         // register option with the normal option parser builder (clone value for the builder)
@@ -585,6 +653,7 @@ impl FliCommand {
             short_flag: short_flag.to_string(),
             value_type: value,
             callback,
+            stop_main_callback,
         };
 
         // record index and maps for quick lookup
@@ -650,7 +719,9 @@ impl FliCommand {
 
     /// Creates and adds a new subcommand, returning a mutable reference.
     ///
-    /// This is the fluent API for building command trees.
+    /// This method creates a subcommand that automatically inherits options marked
+    /// as inheritable from this parent command. Inherited options are cloned from
+    /// the parent's option parser, eliminating the need to redefine common options.
     ///
     /// # Arguments
     ///
@@ -664,11 +735,26 @@ impl FliCommand {
     /// # Examples
     ///
     /// ```rust
+    /// use fli::command::FliCommand;
+    /// use fli::option_parser::ValueTypes;
+    ///
+    /// let mut cmd = FliCommand::new("app", "Main application");
+    /// cmd.add_option("verbose", "Enable verbose", "-v", "--verbose", ValueTypes::None);
+    /// cmd.parser_mut().mark_inheritable("-v").unwrap();
+    ///
+    /// // Subcommand automatically inherits -v/--verbose
     /// cmd.subcommand("start", "Start service")
     ///    .add_option("daemon", "Run as daemon", "-d", "--daemon", ValueTypes::None);
     /// ```
+    ///
+    /// # Notes
+    ///
+    /// - Inheritable options are automatically cloned to subcommands
+    /// - Each subcommand gets its own copy of inherited options
+    /// - Mark options as inheritable using `parser_mut().mark_inheritable()`
     pub fn subcommand(&mut self, name: &str, description: &str) -> &mut FliCommand {
-        let command = FliCommand::new(name, description);
+        let inherited_builder = self.get_option_parser().inheritable_options_builder();
+        let command = FliCommand::with_parser(name, description, inherited_builder);
         self.add_sub_command(command);
         self.sub_commands.get_mut(name).unwrap()
     }
@@ -785,8 +871,14 @@ impl FliCommand {
 
         if let Some(preserved_name) = preserved_option {
             if let Some(preserved) = self.get_preserved_option(preserved_name) {
-                // Execute the preserved option's callback
-                callback = Some(preserved.callback);
+                // Execute the preserved option's callback immediately
+                (preserved.callback)(&callback_data);
+
+                // If this preserved option should stop the main callback, return early.
+                // Otherwise allow the main callback to run (if set).
+                if preserved.stop_main_callback {
+                    return Ok(());
+                }
             }
         }
 

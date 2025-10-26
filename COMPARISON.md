@@ -77,7 +77,7 @@ app.set_callback(|data| {
 
 | v0.1.x Syntax | Meaning | v1.0.0 Type |
 |---------------|---------|-------------|
-| (no symbol) | Flag only | `ValueTypes::None` |
+| (no symbol) | Flag only | `ValueTypes::OptionalSingle(Some(Value::Bool(false)))` |
 | `<>` | Required single | `ValueTypes::RequiredSingle(Value::Str(String::new()))` |
 | `[]` | Optional single | `ValueTypes::OptionalSingle(None)` |
 | `<...>` | Required multiple (at least 1) | `ValueTypes::RequiredMultiple(vec![], None)` |
@@ -201,7 +201,7 @@ fn main() {
         "Enable verbose",
         "-v",
         "--verbose",
-        ValueTypes::None
+        ValueTypes::OptionalSingle(Some(Value::Bool(false)))
     );
     
     app.set_callback(|data| {
@@ -377,7 +377,7 @@ move_cmd.set_callback(|data| {
 | Task | v0.1.x | v1.0.0 |
 |------|--------|--------|
 | Create app | `Fli::init("name", "desc")` | `Fli::new("name", "ver", "desc")` |
-| Add flag | `option("-v --verbose", "...", cb)` | `add_option("verbose", "...", "-v", "--verbose", ValueTypes::None)` |
+| Add flag | `option("-v --verbose", "...", cb)` | `add_option("verbose", "...", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))))` |
 | Required value | `option("-n --name, <>", "...", cb)` | `add_option("name", "...", "-n", "--name", RequiredSingle(_))` |
 | Optional value | `option("-f --file, []", "...", cb)` | `add_option("file", "...", "-f", "--file", OptionalSingle(_))` |
 | Multiple values | `option("-f --files, <...>", "...", cb)` | `add_option("files", "...", "-f", "--files", RequiredMultiple(_, None))` |

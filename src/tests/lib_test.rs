@@ -76,7 +76,11 @@ fn test_find_similar_close_match() {
 
 #[test]
 fn test_find_similar_multiple_matches() {
-    let options = vec!["build".to_string(), "rebuilt".to_string(), "builder".to_string()];
+    let options = vec![
+        "build".to_string(),
+        "rebuilt".to_string(),
+        "builder".to_string(),
+    ];
     let similar = find_similar("buil", &options, 3);
 
     assert!(!similar.is_empty());
@@ -95,7 +99,11 @@ fn test_find_similar_no_match() {
 
 #[test]
 fn test_find_similar_threshold() {
-    let options = vec!["verbose".to_string(), "version".to_string(), "verify".to_string()];
+    let options = vec![
+        "verbose".to_string(),
+        "version".to_string(),
+        "verify".to_string(),
+    ];
     let similar = find_similar("verb", &options, 2);
 
     // With threshold of 2, might not find matches if distance is too large
@@ -124,7 +132,13 @@ fn test_find_similar_single_option() {
 
 #[test]
 fn test_find_similar_limit() {
-    let options = vec!["build".to_string(), "rebuilt".to_string(), "builder".to_string(), "building".to_string(), "builds".to_string()];
+    let options = vec![
+        "build".to_string(),
+        "rebuilt".to_string(),
+        "builder".to_string(),
+        "building".to_string(),
+        "builds".to_string(),
+    ];
     let similar = find_similar("buil", &options, 2);
 
     // Should return at most `limit` results
@@ -137,13 +151,17 @@ fn test_levenshtein_unicode() {
     assert_eq!(levenshtein_distance("café", "café"), 0);
     assert_eq!(levenshtein_distance("日本", "日本"), 0);
     // Multi-byte UTF-8 characters work correctly
-    assert_eq!(levenshtein_distance("🦀", "🦀"), 0);  // Rust crab emoji
+    assert_eq!(levenshtein_distance("🦀", "🦀"), 0); // Rust crab emoji
     assert_eq!(levenshtein_distance("a🦀b", "a🦀b"), 0);
 }
 
 #[test]
 fn test_find_similar_case_sensitive() {
-    let options = vec!["Serve".to_string(), "serve".to_string(), "SERVER".to_string()];
+    let options = vec![
+        "Serve".to_string(),
+        "serve".to_string(),
+        "SERVER".to_string(),
+    ];
     let similar = find_similar("serve", &options, 3);
 
     assert!(!similar.is_empty());

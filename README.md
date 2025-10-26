@@ -6,7 +6,9 @@ A powerful, type-safe CLI library for Rust inspired by [commander.js](https://gi
 [![Documentation](https://docs.rs/fli/badge.svg)](https://docs.rs/fli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Note**: Version 1.0.0 includes breaking changes. See the [Migration Guide](#migration-from-0x) for upgrading from v0.x.
+> **⚠️ BREAKING CHANGE in v1.2.0**: `ValueTypes::None` has been removed! Use `ValueTypes::OptionalSingle(Some(Value::Bool(false)))` for flag options instead. See the [Migration Guide](#migration-from-valuetypesnone) for details.
+
+> **Note**: Version 1.0.0 included breaking changes. See the [Migration Guide](#migration-from-0x) for upgrading from v0.x.
 
 ## Features
 
@@ -37,7 +39,7 @@ fn main() {
         "Enable verbose output",
         "-v",
         "--verbose",
-        ValueTypes::None
+        ValueTypes::OptionalSingle(Some(Value::Bool(false)))
     );
     
     // Add an option that requires a value
@@ -84,7 +86,7 @@ Fli provides explicit value types for type-safe option parsing:
 use fli::{ValueTypes, Value};
 
 // Flag option (no value)
-ValueTypes::None
+ValueTypes::OptionalSingle(Some(Value::Bool(false)))
 
 // Required single value
 ValueTypes::RequiredSingle(Value::Str(String::new()))
@@ -134,7 +136,7 @@ fn main() {
         "Commit all changes",
         "-a",
         "--all",
-        ValueTypes::None
+        ValueTypes::OptionalSingle(Some(Value::Bool(false)))
     );
     
     // Set the command callback
@@ -160,6 +162,8 @@ fn main() {
 The `FliCallbackData` provides convenient methods for accessing parsed values:
 
 ```rust
+use fli::option_parser::{Value, ValueTypes};
+
 fn my_callback(data: &FliCallbackData) {
     // Get a single string value
     let name = data.get_option_value("name")
@@ -171,8 +175,14 @@ fn my_callback(data: &FliCallbackData) {
         .and_then(|v| v.as_strings())
         .unwrap_or_default();
     
-    // Check if a flag was passed
-    let verbose = data.get_option_value("verbose").is_some();
+    // Check if a flag was passed (NEW in v1.2.0)
+    // Flags use Bool values: false = not passed, true = passed
+    let verbose = data.get_option_value("verbose")
+        .map(|v| matches!(v, ValueTypes::OptionalSingle(Some(Value::Bool(true)))))
+        .unwrap_or(false);
+    
+    // Shorter alternative for flags:
+    let is_flag_set = data.get_option_value("verbose").is_some();
     
     // Get positional arguments
     let first_arg = data.get_argument_at(0);
@@ -490,7 +500,7 @@ app.set_callback(callback);
 
 | v0.x | v1.0 |
 |------|------|
-| (no symbol) | `ValueTypes::None` |
+| (no symbol) | `ValueTypes::OptionalSingle(Some(Value::Bool(false)))` |
 | `<>` | `ValueTypes::RequiredSingle(_)` |
 | `[]` | `ValueTypes::OptionalSingle(_)` |
 | `<...>` | `ValueTypes::RequiredMultiple(vec![], None)` |
@@ -527,6 +537,70 @@ let cmd = app.command("serve", "Start server")?; // Returns Result
 ```
 
 For a complete migration guide, see [MIGRATION.md](MIGRATION.md).
+
+## Migration from ValueTypes::None
+
+**⚠️ Breaking Change in v1.2.0**
+
+`ValueTypes::None` has been removed to fix a critical design flaw where you couldn't distinguish between "flag was defined" and "flag was passed".
+
+### Quick Fix
+
+**Before (v1.1 and earlier):**
+```rust
+app.add_option(
+    "verbose",
+    "Enable verbose output",
+    "-v",
+    "--verbose",
+    ValueTypes::None  // ❌ Removed in v1.2.0
+);
+```
+
+**After (v1.2.0+):**
+```rust
+use fli::option_parser::{Value, ValueTypes};
+
+app.add_option(
+    "verbose",
+    "Enable verbose output",
+    "-v",
+    "--verbose",
+    ValueTypes::OptionalSingle(Some(Value::Bool(false)))  // ✅ Use Bool(false) as default
+);
+```
+
+### Checking if a Flag was Passed
+
+**Before (v1.1 - didn't work correctly):**
+```rust
+// This would always be true if the option was defined!
+let verbose = data.get_option_value("verbose").is_some();
+```
+
+**After (v1.2.0 - works correctly):**
+```rust
+// Method 1: Check the boolean value
+let verbose = data.get_option_value("verbose")
+    .map(|v| matches!(v, ValueTypes::OptionalSingle(Some(Value::Bool(true)))))
+    .unwrap_or(false);
+
+// Method 2: Simpler (still works, checks if value was updated)
+let verbose = data.get_option_value("verbose").is_some();
+```
+
+### Why the Change?
+
+With `ValueTypes::None`:
+- ❌ Could not tell if `-v` was passed or not
+- ❌ `get_option_value()` always returned `Some` for defined options
+- ❌ Had to search command chain to check flag usage
+
+With `ValueTypes::OptionalSingle(Some(Value::Bool(...)))`:
+- ✅ `Bool(false)` = flag not passed (default)
+- ✅ `Bool(true)` = flag was passed
+- ✅ Can query option parser directly
+- ✅ Clear, idiomatic Rust
 
 ## Documentation
 

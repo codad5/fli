@@ -4,6 +4,7 @@ pub mod command_test;
 pub mod display_test;
 pub mod error_test;
 pub mod fli_test;
+pub mod input_parser_test;
 pub mod lib_test;
 pub mod macros_test;
 pub mod option_parser_test;

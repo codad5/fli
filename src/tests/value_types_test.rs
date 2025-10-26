@@ -38,7 +38,7 @@ fn test_value_bool_creation() {
 
 #[test]
 fn test_value_types_none_expects_value() {
-    let vt = ValueTypes::None;
+    let vt = ValueTypes::OptionalSingle(Some(Value::Bool(false)));
     assert!(!vt.expects_value());
 }
 
@@ -80,7 +80,7 @@ fn test_as_str_with_optional_single() {
 
 #[test]
 fn test_as_str_with_none() {
-    let vt = ValueTypes::None;
+    let vt = ValueTypes::OptionalSingle(Some(Value::Bool(false)));
     assert_eq!(vt.as_str(), None);
 }
 
@@ -122,7 +122,7 @@ fn test_as_strings_with_optional_multiple() {
 
 #[test]
 fn test_as_strings_with_none() {
-    let vt = ValueTypes::None;
+    let vt = ValueTypes::OptionalSingle(Some(Value::Bool(false)));
     assert_eq!(vt.as_strings(), None);
 }
 

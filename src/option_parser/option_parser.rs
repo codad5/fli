@@ -1,6 +1,6 @@
 use super::value_types::ValueTypes;
-use std::collections::HashMap;
 use crate::error::{FliError, Result};
+use std::collections::HashMap;
 /// Represents a single command-line option with its configuration.
 ///
 /// This stores both the definition (flags, description) and the parsed value.
@@ -34,6 +34,7 @@ pub struct CommandOptionsParser {
     pub options: Vec<SingleOption>,
     short_option_map: HashMap<String, usize>,
     long_option_map: HashMap<String, usize>,
+    inheritable_flags: Vec<usize>,
 }
 
 impl CommandOptionsParser {
@@ -43,7 +44,143 @@ impl CommandOptionsParser {
             options: Vec::new(),
             short_option_map: HashMap::new(),
             long_option_map: HashMap::new(),
+            inheritable_flags: Vec::new(),
         }
+    }
+
+    /// Marks a single option as inheritable by its flag.
+    ///
+    /// Inheritable options are automatically passed down to subcommands, eliminating
+    /// the need to redefine common options (like `--verbose`, `--quiet`, `--color`)
+    /// for every subcommand.
+    ///
+    /// # Arguments
+    ///
+    /// * `flag` - The short or long flag of the option to mark as inheritable (e.g., "-v" or "--verbose")
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If the flag was found and successfully marked as inheritable
+    /// * `Err(FliError::OptionNotFound)` - If the flag doesn't correspond to any registered option
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fli::option_parser::{CommandOptionsParser, ValueTypes};
+    ///
+    /// let mut parser = CommandOptionsParser::new();
+    /// parser.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
+    /// parser.mark_inheritable("-v").unwrap();
+    ///
+    /// // Now the -v flag will be automatically available to all subcommands
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// - If an option is already marked as inheritable, calling this again has no effect
+    /// - The option must exist before it can be marked as inheritable
+    /// - Only the flag is needed, not the option name
+    pub fn mark_inheritable(&mut self, flag: &str) -> Result<()> {
+        if let Some(index) = self.get_option_position(flag) {
+            if !self.inheritable_flags.contains(&index) {
+                self.inheritable_flags.push(index);
+            }
+            Ok(())
+        } else {
+            Err(FliError::OptionNotFound(flag.to_string()))
+        }
+    }
+
+    /// Marks multiple options as inheritable in a single call.
+    ///
+    /// This is a convenience method for marking several options as inheritable at once.
+    /// It accepts any iterable of items that can be referenced as strings (short or long flags).
+    ///
+    /// # Arguments
+    ///
+    /// * `flags` - An iterable of flag strings (e.g., `&["-v", "--quiet", "--color"]`)
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - If all flags were found and successfully marked as inheritable
+    /// * `Err(FliError::OptionNotFound)` - If any flag is not found (processing stops at first error)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fli::option_parser::{CommandOptionsParser, ValueTypes};
+    ///
+    /// let mut parser = CommandOptionsParser::new();
+    /// parser.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
+    /// parser.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+    /// parser.add_option("color", "Enable colors", "-c", "--color", ValueTypes::None);
+    ///
+    /// // Mark all three as inheritable at once
+    /// parser.mark_inheritable_many(&["-v", "-q", "-c"]).unwrap();
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// - Processing stops at the first error encountered
+    /// - No partial marking occurs - if one flag fails, previously processed flags remain marked
+    /// - You can mix short and long flags in the same call
+    pub fn mark_inheritable_many<I, S>(&mut self, flags: I) -> Result<()>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        for f in flags {
+            self.mark_inheritable(f.as_ref())?;
+        }
+        Ok(())
+    }
+
+    /// Creates a builder containing only the options marked as inheritable.
+    ///
+    /// This method is primarily used internally to propagate inheritable options to subcommands.
+    /// It returns a `CommandOptionsParserBuilder` pre-populated with clones of all options
+    /// that have been marked as inheritable.
+    ///
+    /// # Returns
+    ///
+    /// A `CommandOptionsParserBuilder` containing clones of all inheritable options
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fli::option_parser::{CommandOptionsParser, ValueTypes};
+    ///
+    /// let mut parser = CommandOptionsParser::new();
+    /// parser.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
+    /// parser.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+    /// parser.mark_inheritable("-v").unwrap();
+    ///
+    /// // Get a builder with only the inheritable options
+    /// let builder = parser.inheritable_options_builder();
+    /// // This builder contains only the --verbose option
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// - The returned builder is independent - modifying it doesn't affect the parent parser
+    /// - Options are cloned, so changes to the parent won't affect already-created builders
+    /// - If no options are marked as inheritable, returns an empty builder
+    /// - This is typically used when creating subcommands to inherit parent options
+    pub fn inheritable_options_builder(&self) -> CommandOptionsParserBuilder {
+        let mut builder = CommandOptionsParserBuilder::new();
+        for &idx in &self.inheritable_flags {
+            if let Some(opt) = self.options.get(idx) {
+                // add_option clones the provided data where necessary
+                builder.add_option(
+                    &opt.name,
+                    &opt.description,
+                    &opt.short_flag,
+                    &opt.long_flag,
+                    opt.value.clone(),
+                );
+            }
+        }
+        builder
     }
 
     /// Finds the position of an option by flag.

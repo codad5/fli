@@ -180,10 +180,9 @@ impl InputArgsParser {
                             option_name.clone(),
                             ValueTypes::RequiredSingle(value.clone()),
                         ));
-                        command.get_option_parser().update_option_value(
-                            option_name,
-                            ValueTypes::RequiredSingle(value),
-                        )?;
+                        command
+                            .get_option_parser()
+                            .update_option_value(option_name, ValueTypes::RequiredSingle(value))?;
                         state.set_next_mode(ParseState::InOption)?;
                         i += 1;
                         continue;
@@ -315,12 +314,6 @@ impl InputArgsParser {
                         state.set_next_mode(ParseState::InOption)?;
                         continue; // Don't increment i again
                     }
-                    ValueTypes::None => {
-                        // This shouldn't happen as None options don't accept values
-                        return Err(FliError::Internal(
-                            "AcceptingValue state with None value type".to_string(),
-                        ));
-                    }
                 }
             }
 
@@ -341,11 +334,17 @@ impl InputArgsParser {
                     .ok_or_else(|| FliError::OptionNotFound(arg.to_string()))?;
 
                 match expected_value_type {
-                    ValueTypes::None => {
-                        // Flag option, no value needed
-                        self.command_chain
-                            .push(CommandChain::Option(arg.to_string(), ValueTypes::None));
+                    ValueTypes::OptionalSingle(Some(Value::Bool(_))) => {
+                        // Flag option - set to Bool(true) when encountered
+                        let flag_value = ValueTypes::OptionalSingle(Some(Value::Bool(true)));
+                        command
+                            .get_option_parser()
+                            .update_option_value(arg, flag_value.clone())?;
                         state.set_next_mode(ParseState::InOption)?;
+                        state.set_next_mode(ParseState::AcceptingValue(
+                            arg.to_string(),
+                            flag_value
+                        ))?;
                     }
                     _ => {
                         // Option requires value(s), transition to AcceptingValue

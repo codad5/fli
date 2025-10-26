@@ -2,7 +2,7 @@ use crate::{
     command::{FliCallbackData, FliCommand},
     display,
     error::{FliError, Result},
-    option_parser::{InputArgsParser, ValueTypes},
+    option_parser::{InputArgsParser, Value, ValueTypes},
 };
 
 /// The main application struct for building CLI applications.
@@ -55,12 +55,8 @@ impl Fli {
     ///                ValueTypes::RequiredSingle(Value::Int(8080)));
     /// ```
     pub fn command(&mut self, name: &str, description: &str) -> Result<&mut FliCommand> {
-        let command = FliCommand::new(name, description);
-        self.add_command(command);
-        self.root_command
-            .sub_commands
-            .get_mut(name)
-            .ok_or_else(|| FliError::Internal("Failed to get command after insertion".to_string()))
+        // Use subcommand() to automatically inherit options
+        Ok(self.root_command.subcommand(name, description))
     }
 
     /// Adds a pre-configured command to the application.
@@ -133,6 +129,88 @@ impl Fli {
     ) {
         self.root_command
             .add_option(name, description, short_flag, long_flag, value);
+    }
+
+    /// Marks a single option as inheritable to all subcommands.
+    ///
+    /// Inheritable options are automatically propagated to all subcommands created
+    /// after marking. This is useful for common options like verbose, quiet, or
+    /// color flags that should be available across all commands.
+    ///
+    /// # Arguments
+    ///
+    /// * `flag` - The short or long flag of the option to mark as inheritable (e.g., "-v" or "--verbose")
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if the option was successfully marked as inheritable, or an error if the flag doesn't exist
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fli::Fli;
+    /// use fli::option_parser::ValueTypes;
+    ///
+    /// let mut app = Fli::new("myapp", "1.0.0", "My application");
+    /// app.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
+    /// app.mark_inheritable("-v").unwrap();
+    ///
+    /// // All subcommands will now have the -v/--verbose option
+    /// app.command("start", "Start the service").unwrap();
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// - Options must be added before marking them as inheritable
+    /// - Only subcommands created after marking will inherit the option
+    /// - Each subcommand gets its own copy of inherited options
+    pub fn mark_inheritable(&mut self, flag: &str) -> Result<()> {
+        self.root_command.get_option_parser().mark_inheritable(flag)
+    }
+
+    /// Marks multiple options as inheritable to all subcommands.
+    ///
+    /// This is a convenience method for marking several options at once, equivalent
+    /// to calling `mark_inheritable()` multiple times.
+    ///
+    /// # Arguments
+    ///
+    /// * `flags` - An iterator of flag strings (short or long) to mark as inheritable
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if all options were successfully marked, or an error if any flag doesn't exist
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use fli::Fli;
+    /// use fli::option_parser::ValueTypes;
+    ///
+    /// let mut app = Fli::new("myapp", "1.0.0", "My application");
+    /// app.add_option("verbose", "Enable verbose", "-v", "--verbose", ValueTypes::None);
+    /// app.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+    /// app.add_option("color", "Enable colors", "-c", "--color", ValueTypes::None);
+    ///
+    /// // Mark all three options as inheritable at once
+    /// app.mark_inheritable_many(&["-v", "-q", "-c"]).unwrap();
+    ///
+    /// // All subcommands will now have -v, -q, and -c options
+    /// ```
+    ///
+    /// # Notes
+    ///
+    /// - All options must exist before calling this method
+    /// - If any flag is invalid, the entire operation fails
+    /// - Subcommands created after this call will inherit all marked options
+    pub fn mark_inheritable_many<I, S>(&mut self, flags: I) -> Result<()>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        self.root_command
+            .get_option_parser()
+            .mark_inheritable_many(flags)
     }
 }
 
@@ -233,13 +311,19 @@ impl Fli {
 
     /// Add a debug flag to root command
     pub fn add_debug_option(&mut self) {
-        self.add_option(
+        self.root_command.add_option_with_callback(
             "debug",
             "Enable debug output",
             "-D",
             "--debug",
-            ValueTypes::None,
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+            false,
+            |data| {
+                display::enable_debug();
+            },
         );
+
+        self.mark_inheritable("--debug").unwrap();
 
         // Check if debug flag is present in args
         if std::env::args().any(|arg| arg == "-D" || arg == "--debug") {
