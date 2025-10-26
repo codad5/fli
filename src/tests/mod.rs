@@ -1,2 +1,10 @@
-// pub mod option_parser_test;
+// Test modules
+pub mod app_test;
+pub mod command_test;
+pub mod display_test;
+pub mod error_test;
 pub mod fli_test;
+pub mod lib_test;
+pub mod macros_test;
+pub mod option_parser_test;
+pub mod value_types_test;
