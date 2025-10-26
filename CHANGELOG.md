@@ -10,39 +10,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Inheritable options feature** - Allows parent commands to share options with subcommands
-  - `mark_inheritable(&mut self, flag: &str) -> Result<()>` - Marks a single option as inheritable
-  - `mark_inheritable_many<I, S>(&mut self, flags: I) -> Result<()>` - Marks multiple options as inheritable
-  - `inheritable_options_builder(&self) -> CommandOptionsParserBuilder` - Creates a builder with only inheritable options
+  - `CommandOptionsParser::mark_inheritable(&mut self, flag: &str) -> Result<()>` - Marks a single option as inheritable
+  - `CommandOptionsParser::mark_inheritable_many<I, S>(&mut self, flags: I) -> Result<()>` - Marks multiple options as inheritable
+  - `CommandOptionsParser::inheritable_options_builder(&self) -> CommandOptionsParserBuilder` - Creates a builder with only inheritable options
   - `FliCommand::with_parser(name, description, builder)` - Creates commands with pre-configured option parsers
+  - `Fli::mark_inheritable(&mut self, flag: &str) -> Result<()>` - Convenience method to mark root command options as inheritable
+  - `Fli::mark_inheritable_many<I, S>(&mut self, flags: I) -> Result<()>` - Convenience method to mark multiple root options as inheritable
 - **Automatic option inheritance** in subcommands
   - Subcommands created via `subcommand()` now automatically inherit options marked as inheritable from parent commands
   - Eliminates code duplication for common options (e.g., verbose, quiet, color flags)
   - Each subcommand receives its own copy of inherited options
+- **Comprehensive test coverage** - Added 20 new test cases covering:
+  - Single and multiple option inheritance
+  - Nested subcommand inheritance
+  - Error handling for non-existent options
+  - Independent option copies for each subcommand
+  - Mixed short/long flag marking
 
 ### Changed
 
 - **Enhanced `subcommand()` method** - Now automatically propagates inheritable options from parent to child commands
   - Uses `inheritable_options_builder()` internally to clone marked options
   - Maintains backward compatibility with existing code
+- **Simplified `Fli::command()` method** - Now uses `subcommand()` for automatic inheritance
 
 ### Examples
+
+```rust
+use fli::Fli;
+use fli::option_parser::ValueTypes;
+
+// Parent command with common options
+let mut app = Fli::new("myapp", "1.0.0", "My application");
+app.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
+app.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+
+// Mark options as inheritable using convenient Fli methods
+app.mark_inheritable_many(&["-v", "-q"]).unwrap();
+
+// All subcommands automatically inherit -v and -q
+app.command("start", "Start the service").unwrap();
+app.command("stop", "Stop the service").unwrap();
+// Both subcommands now have -v/--verbose and -q/--quiet options
+```
+
+**Alternative using FliCommand directly:**
 
 ```rust
 use fli::command::FliCommand;
 use fli::option_parser::ValueTypes;
 
-// Parent command with common options
-let mut app = FliCommand::new("myapp", "My application");
-app.add_option("verbose", "Enable verbose output", "-v", "--verbose", ValueTypes::None);
-app.add_option("quiet", "Suppress output", "-q", "--quiet", ValueTypes::None);
+let mut parent = FliCommand::new("parent", "Parent command");
+parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::None);
+parent.get_option_parser().mark_inheritable("-v").unwrap();
 
-// Mark options as inheritable
-app.parser_mut().mark_inheritable_many(&["-v", "-q"]).unwrap();
-
-// All subcommands automatically inherit -v and -q
-app.subcommand("start", "Start the service");
-app.subcommand("stop", "Stop the service");
-// Both subcommands now have -v/--verbose and -q/--quiet options
+// Subcommand automatically inherits -v
+let child = parent.subcommand("child", "Child command");
 ```
 
 ## [1.1.1] - 2025-10-26

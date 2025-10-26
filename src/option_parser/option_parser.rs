@@ -1,6 +1,6 @@
 use super::value_types::ValueTypes;
-use std::collections::HashMap;
 use crate::error::{FliError, Result};
+use std::collections::HashMap;
 /// Represents a single command-line option with its configuration.
 ///
 /// This stores both the definition (flags, description) and the parsed value.

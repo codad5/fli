@@ -235,7 +235,7 @@ impl FliCommand {
         x.setup_help_flag();
         x
     }
-    
+
     /// Creates a new command with a pre-configured option parser builder.
     ///
     /// This method is useful for creating subcommands that inherit options from their
@@ -294,7 +294,6 @@ impl FliCommand {
         x.setup_help_flag();
         x
     }
-    
 
     /// Sets the number of expected positional arguments for this command.
     ///
