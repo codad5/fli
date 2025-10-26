@@ -34,6 +34,7 @@ pub enum Value {
 /// # Examples
 ///
 /// ```rust
+/// use fli:: option_parser::{Value, ValueTypes|;
 /// // Flag option (no value)
 /// let verbose = ValueTypes::None;
 ///
@@ -86,6 +87,8 @@ impl ValueTypes {
     /// # Examples
     ///
     /// ```rust
+    ///  use fli::option_parser::ValueTypes;
+    /// 
     /// assert_eq!(ValueTypes::None.expects_value(), false);
     /// assert_eq!(ValueTypes::RequiredSingle(Value::Str(s)).expects_value(), true);
     /// ```
