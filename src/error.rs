@@ -3,13 +3,9 @@ use thiserror::Error;
 /// Errors that can occur during CLI parsing and execution
 #[derive(Debug, Error)]
 pub enum FliError {
-    
     /// Command name doesn't match expected command
     #[error("Command mismatch: expected '{expected}', got '{actual}'")]
-    CommandMismatch {
-        expected: String,
-        actual: String,
-    },
+    CommandMismatch { expected: String, actual: String },
 
     /// Unknown subcommand was specified
     #[error("Unknown command: '{0}'. Run with --help to see available commands")]
@@ -20,19 +16,13 @@ pub enum FliError {
     UnknownOption(String),
 
     // ==================== Value Errors ====================
-    
     /// Required option value is missing
     #[error("Missing required value for option '{option}'")]
-    MissingValue {
-        option: String,
-    },
+    MissingValue { option: String },
 
     /// Option expects no value but one was provided
     #[error("Option '{option}' does not accept values, but '{value}' was provided")]
-    UnexpectedValue {
-        option: String,
-        value: String,
-    },
+    UnexpectedValue { option: String, value: String },
 
     /// Wrong number of values provided
     #[error("Option '{option}' expected {expected} value(s), got {actual}")]
@@ -59,29 +49,18 @@ pub enum FliError {
     },
 
     // ==================== State Errors ====================
-    
     /// Invalid state transition during parsing
     #[error("Invalid parse state transition from {from:?} to {to:?}")]
-    InvalidStateTransition {
-        from: String,
-        to: String,
-    },
+    InvalidStateTransition { from: String, to: String },
 
     /// Unexpected token at position
     #[error("Unexpected '{token}' at position {position}")]
-    UnexpectedToken {
-        token: String,
-        position: usize,
-    },
+    UnexpectedToken { token: String, position: usize },
 
     // ==================== Configuration Errors ====================
-    
     /// Option configuration is invalid
     #[error("Invalid option configuration for '{option}': {reason}")]
-    InvalidOptionConfig {
-        option: String,
-        reason: String,
-    },
+    InvalidOptionConfig { option: String, reason: String },
 
     /// Command configuration is invalid
     #[error("Invalid command configuration: {0}")]
@@ -89,12 +68,9 @@ pub enum FliError {
 
     /// Option flag format is invalid
     #[error("Invalid flag format: '{flag}'. Flags must start with '-' or '--'")]
-    InvalidFlagFormat {
-        flag: String,
-    },
+    InvalidFlagFormat { flag: String },
 
     // ==================== Runtime Errors ====================
-    
     /// Option was not found in parser
     #[error("Option '{0}' not found in parser")]
     OptionNotFound(String),
@@ -104,13 +80,12 @@ pub enum FliError {
     ParserNotPrepared,
 
     // ==================== Generic Errors ====================
-    
     /// Internal error (shouldn't happen in normal usage)
     #[error("Internal error: {0}")]
     Internal(String),
     /// Invalid command usage (e.g., wrong flags or operands)
     #[error("Invalid usage: {0}. Run with --help to see correct usage")]
-    InvalidUsage (String),
+    InvalidUsage(String),
 }
 
 impl FliError {
@@ -143,11 +118,7 @@ impl FliError {
     }
 
     /// Creates a value count mismatch error
-    pub fn value_count_mismatch(
-        option: impl Into<String>,
-        expected: usize,
-        actual: usize,
-    ) -> Self {
+    pub fn value_count_mismatch(option: impl Into<String>, expected: usize, actual: usize) -> Self {
         Self::ValueCountMismatch {
             option: option.into(),
             expected,

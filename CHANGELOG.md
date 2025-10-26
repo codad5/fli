@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-26
+
+### Changed
+- **Code formatting improvements** in error handling module
+  - Reformatted struct field definitions in `FliError` enum for better readability
+  - Removed unnecessary blank lines for cleaner code organization
+- **Code formatting improvements** in value types module
+  - Simplified match expression formatting in `replace_with_expected_value` method
+  - Improved code consistency and readability
+- **Test module organization**
+  - Reordered test module declarations alphabetically in `tests/mod.rs`
+
+## [1.1.0] - 2025-10-26
+
+### Added
+- **Value mutation and parsing methods** in `Value` enum
+  - `replace_with_expected_value(&mut self, new_value: &str) -> Result<Value>` - Updates a value in place by parsing a string according to the value's type
+  - `from_str_with_type(template: &Value, input: &str) -> Result<Value>` - Creates a new value from a string using a template for type inference
+- **Enhanced boolean parsing** - Accepts multiple formats: true/false, t/f, 1/0, yes/no, y/n (case-insensitive)
+- **ValueParseError variant** in `FliError` enum
+  - Provides detailed error messages for type parsing failures
+  - Includes the failed value, expected type, and reason for failure
+- **PartialEq implementation** for `Value` enum
+  - Enables value comparison and equality testing
+  - Float comparison uses EPSILON for precision handling
+- **Comprehensive test suite** for value types
+  - 44 tests covering all value creation, parsing, and conversion scenarios
+  - Tests for success and failure cases across all supported types (Str, Int, Float, Bool)
+  - Tests for `ValueTypes` helper methods (`expects_value`, `as_str`, `as_strings`)
+
+### Changed
+- **Input parsing improvements**
+  - Enhanced string value handling in option parser
+  - Better default value management for optional single values
+  - Improved error propagation using `ValueParseError`
+
+### Internal
+- Removed obsolete `tests.rs` file in favor of organized `tests/` directory
+- Added `value_types_test.rs` with extensive test coverage
+
 ## [1.0.0] - 2025-10-24
 
 ### 🎉 Major Release - Breaking Changes
