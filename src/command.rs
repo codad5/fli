@@ -175,6 +175,10 @@ pub struct PreservedOption {
     pub short_flag: String,
     pub value_type: ValueTypes,
     pub callback: fn(&FliCallbackData),
+    /// If true, invoking this preserved option will prevent the command's main
+    /// callback from running; if false, both the preserved option callback and
+    /// the main callback will run.
+    pub stop_main_callback: bool,
 }
 
 /// Represents a CLI command with options, subcommands, and execution logic.
@@ -326,6 +330,7 @@ impl FliCommand {
             "-h",
             "--help",
             ValueTypes::None,
+            true,
             |data| {
                 let cmd = data.get_command();
 
@@ -629,6 +634,7 @@ impl FliCommand {
         short_flag: &str,
         long_flag: &str,
         value: ValueTypes,
+        stop_main_callback: bool,
         callback: fn(&FliCallbackData),
     ) -> &mut Self {
         // register option with the normal option parser builder (clone value for the builder)
@@ -646,6 +652,7 @@ impl FliCommand {
             short_flag: short_flag.to_string(),
             value_type: value,
             callback,
+            stop_main_callback,
         };
 
         // record index and maps for quick lookup
@@ -863,8 +870,14 @@ impl FliCommand {
 
         if let Some(preserved_name) = preserved_option {
             if let Some(preserved) = self.get_preserved_option(preserved_name) {
-                // Execute the preserved option's callback
-                callback = Some(preserved.callback);
+                // Execute the preserved option's callback immediately
+                (preserved.callback)(&callback_data);
+
+                // If this preserved option should stop the main callback, return early.
+                // Otherwise allow the main callback to run (if set).
+                if preserved.stop_main_callback {
+                    return Ok(());
+                }
             }
         }
 

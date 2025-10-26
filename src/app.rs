@@ -311,17 +311,17 @@ impl Fli {
 
     /// Add a debug flag to root command
     pub fn add_debug_option(&mut self) {
-        self.add_option(
+        self.root_command.add_option_with_callback(
             "debug",
             "Enable debug output",
             "-D",
             "--debug",
             ValueTypes::None,
+            false,
+            |data| {
+                display::enable_debug();
+            },
         );
 
-        // Check if debug flag is present in args
-        if std::env::args().any(|arg| arg == "-D" || arg == "--debug") {
-            display::enable_debug();
-        }
     }
 }

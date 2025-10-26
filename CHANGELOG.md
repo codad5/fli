@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Subcommands created via `subcommand()` now automatically inherit options marked as inheritable from parent commands
   - Eliminates code duplication for common options (e.g., verbose, quiet, color flags)
   - Each subcommand receives its own copy of inherited options
+- **Preserved options callback control** - `PreservedOption.stop_main_callback` field
+  - Controls whether a preserved option's callback should prevent the main command callback from executing
+  - When `true` (e.g., --help, --version): executes the preserved callback and exits immediately
+  - When `false` (e.g., --debug): executes the preserved callback and then continues to the main callback
+  - Enables options like `--debug` that configure state without halting execution
 - **Comprehensive test coverage** - Added 20 new test cases covering:
   - Single and multiple option inheritance
   - Nested subcommand inheritance
@@ -33,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses `inheritable_options_builder()` internally to clone marked options
   - Maintains backward compatibility with existing code
 - **Simplified `Fli::command()` method** - Now uses `subcommand()` for automatic inheritance
+- **Updated `add_option_with_callback()` signature** - Added `stop_main_callback` parameter
+  - **Breaking change**: Existing calls must specify whether the callback should stop main execution
+  - Example: `.add_option_with_callback("help", "Help", "-h", "--help", ValueTypes::None, true, callback)`
+- **Improved `add_debug_option()` implementation** - Now uses `add_option_with_callback` with `stop_main_callback: false`
+  - Allows --debug flag to configure debug mode and still run the main command
+  - Removes the manual argument checking that ran before the app starts
 
 ### Examples
 
