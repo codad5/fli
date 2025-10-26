@@ -166,3 +166,240 @@ fn test_value_types_clone() {
 
     assert!(vt2.expects_value());
 }
+
+// Tests for Value::replace_with_expected_value
+
+#[test]
+fn test_replace_string_value() {
+    let mut val = Value::Str("old".to_string());
+    let result = val.replace_with_expected_value("new");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Str("new".to_string()));
+}
+
+#[test]
+fn test_replace_int_value_success() {
+    let mut val = Value::Int(0);
+    let result = val.replace_with_expected_value("42");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Int(42));
+}
+
+#[test]
+fn test_replace_int_value_negative() {
+    let mut val = Value::Int(0);
+    let result = val.replace_with_expected_value("-123");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Int(-123));
+}
+
+#[test]
+fn test_replace_int_value_large() {
+    let mut val = Value::Int(0);
+    let result = val.replace_with_expected_value("9223372036854775807"); // i64::MAX
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Int(9223372036854775807));
+}
+
+#[test]
+fn test_replace_int_value_failure() {
+    let mut val = Value::Int(0);
+    let result = val.replace_with_expected_value("not_a_number");
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.to_string().contains("integer"));
+}
+
+#[test]
+fn test_replace_int_value_float_string() {
+    let mut val = Value::Int(0);
+    let result = val.replace_with_expected_value("3.14");
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.to_string().contains("integer"));
+}
+
+#[test]
+fn test_replace_float_value_success() {
+    let mut val = Value::Float(0.0);
+    let result = val.replace_with_expected_value("3.14");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Float(3.14));
+}
+
+#[test]
+fn test_replace_float_value_negative() {
+    let mut val = Value::Float(0.0);
+    let result = val.replace_with_expected_value("-2.5");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Float(-2.5));
+}
+
+#[test]
+fn test_replace_float_value_scientific() {
+    let mut val = Value::Float(0.0);
+    let result = val.replace_with_expected_value("1.5e10");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Float(1.5e10));
+}
+
+#[test]
+fn test_replace_float_value_integer_string() {
+    let mut val = Value::Float(0.0);
+    let result = val.replace_with_expected_value("42");
+
+    assert!(result.is_ok());
+    assert_eq!(val, Value::Float(42.0));
+}
+
+#[test]
+fn test_replace_float_value_failure() {
+    let mut val = Value::Float(0.0);
+    let result = val.replace_with_expected_value("not_a_float");
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.to_string().contains("float"));
+}
+
+#[test]
+fn test_replace_bool_value_true_variants() {
+    let test_cases = vec![
+        "true", "True", "TRUE", "t", "T", "1", "yes", "YES", "y", "Y",
+    ];
+
+    for input in test_cases {
+        let mut val = Value::Bool(false);
+        let result = val.replace_with_expected_value(input);
+
+        assert!(result.is_ok(), "Failed for input: {}", input);
+        assert_eq!(val, Value::Bool(true), "Failed for input: {}", input);
+    }
+}
+
+#[test]
+fn test_replace_bool_value_false_variants() {
+    let test_cases = vec![
+        "false", "False", "FALSE", "f", "F", "0", "no", "NO", "n", "N",
+    ];
+
+    for input in test_cases {
+        let mut val = Value::Bool(true);
+        let result = val.replace_with_expected_value(input);
+
+        assert!(result.is_ok(), "Failed for input: {}", input);
+        assert_eq!(val, Value::Bool(false), "Failed for input: {}", input);
+    }
+}
+
+#[test]
+fn test_replace_bool_value_failure() {
+    let mut val = Value::Bool(false);
+    let result = val.replace_with_expected_value("maybe");
+
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = err.to_string();
+    assert!(err_msg.contains("boolean"));
+    assert!(err_msg.contains("true") || err_msg.contains("false"));
+}
+
+#[test]
+fn test_replace_bool_value_invalid_number() {
+    let mut val = Value::Bool(false);
+    let result = val.replace_with_expected_value("2");
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_from_str_with_type_string() {
+    let template = Value::Str(String::new());
+    let result = Value::from_str_with_type(&template, "hello");
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Value::Str("hello".to_string()));
+}
+
+#[test]
+fn test_from_str_with_type_int() {
+    let template = Value::Int(0);
+    let result = Value::from_str_with_type(&template, "999");
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Value::Int(999));
+}
+
+#[test]
+fn test_from_str_with_type_float() {
+    let template = Value::Float(0.0);
+    let result = Value::from_str_with_type(&template, "2.718");
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Value::Float(2.718));
+}
+
+#[test]
+fn test_from_str_with_type_bool() {
+    let template = Value::Bool(false);
+    let result = Value::from_str_with_type(&template, "yes");
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Value::Bool(true));
+}
+
+#[test]
+fn test_from_str_with_type_int_failure() {
+    let template = Value::Int(0);
+    let result = Value::from_str_with_type(&template, "abc");
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_from_str_with_type_preserves_template() {
+    let template = Value::Int(100);
+    let result = Value::from_str_with_type(&template, "42");
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Value::Int(42));
+    // Template should not be modified
+    assert_eq!(template, Value::Int(100));
+}
+
+#[test]
+fn test_value_equality_same_type() {
+    assert_eq!(
+        Value::Str("test".to_string()),
+        Value::Str("test".to_string())
+    );
+    assert_eq!(Value::Int(42), Value::Int(42));
+    assert_eq!(Value::Float(3.14), Value::Float(3.14));
+    assert_eq!(Value::Bool(true), Value::Bool(true));
+}
+
+#[test]
+fn test_value_inequality_different_values() {
+    assert_ne!(
+        Value::Str("test".to_string()),
+        Value::Str("other".to_string())
+    );
+    assert_ne!(Value::Int(42), Value::Int(43));
+    assert_ne!(Value::Bool(true), Value::Bool(false));
+}
+
+#[test]
+fn test_value_inequality_different_types() {
+    assert_ne!(Value::Str("42".to_string()), Value::Int(42));
+    assert_ne!(Value::Int(1), Value::Bool(true));
+    assert_ne!(Value::Float(3.14), Value::Str("3.14".to_string()));
+}
