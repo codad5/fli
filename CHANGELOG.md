@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-26
+
+### Changed
+
+- **Code formatting improvements** in error handling module
+  - Reformatted struct field definitions in `FliError` enum for better readability
+  - Removed unnecessary blank lines for cleaner code organization
+- **Code formatting improvements** in value types module
+  - Simplified match expression formatting in `replace_with_expected_value` method
+  - Improved code consistency and readability
+- **Test module organization**
+  - Reordered test module declarations alphabetically in `tests/mod.rs`
+
+## [1.1.0] - 2025-10-26
+
+### Added
+
+- **Value mutation and parsing methods** in `Value` enum
+  - `replace_with_expected_value(&mut self, new_value: &str) -> Result<Value>` - Updates a value in place by parsing a string according to the value's type
+  - `from_str_with_type(template: &Value, input: &str) -> Result<Value>` - Creates a new value from a string using a template for type inference
+- **Enhanced boolean parsing** - Accepts multiple formats: true/false, t/f, 1/0, yes/no, y/n (case-insensitive)
+- **ValueParseError variant** in `FliError` enum
+  - Provides detailed error messages for type parsing failures
+  - Includes the failed value, expected type, and reason for failure
+- **PartialEq implementation** for `Value` enum
+  - Enables value comparison and equality testing
+  - Float comparison uses EPSILON for precision handling
+- **Comprehensive test suite** for value types
+  - 44 tests covering all value creation, parsing, and conversion scenarios
+  - Tests for success and failure cases across all supported types (Str, Int, Float, Bool)
+  - Tests for `ValueTypes` helper methods (`expects_value`, `as_str`, `as_strings`)
+
+### Changed
+
+- **Input parsing improvements**
+  - Enhanced string value handling in option parser
+  - Better default value management for optional single values
+  - Improved error propagation using `ValueParseError`
+
+### Internal
+
+- Removed obsolete `tests.rs` file in favor of organized `tests/` directory
+- Added `value_types_test.rs` with extensive test coverage
+
 ## [1.0.0] - 2025-10-24
 
 ### 🎉 Major Release - Breaking Changes
@@ -14,6 +58,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
 ### Added
 
 #### Type System
+
 - **Type-safe value parsing** with explicit `ValueTypes` enum
   - `ValueTypes::None` - Flag options with no values
   - `ValueTypes::RequiredSingle(Value)` - Single required value
@@ -27,6 +72,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
   - `Value::Bool(bool)` - Boolean values
 
 #### Command System
+
 - **`FliCommand` struct** - Dedicated command structure with:
   - Hierarchical subcommand support
   - Per-command option parsing
@@ -37,6 +83,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
 - **Subcommand support** via `.subcommand()` method
 
 #### Callback System
+
 - **`FliCallbackData` struct** - Rich context passed to callbacks containing:
   - Parsed options via `get_option_value()`
   - Positional arguments via `get_arguments()` and `get_argument_at()`
@@ -48,6 +95,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
   - Support for multiple lookup formats (with/without dashes)
 
 #### Parser
+
 - **`InputArgsParser`** - Sophisticated argument parser with:
   - State machine-based parsing
   - Support for `--` separator for positional arguments
@@ -60,6 +108,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
   - `IsPreservedOption(String)` - Preserved options for immediate execution
 
 #### Error Handling
+
 - **`FliError` enum** with detailed error types:
   - `UnknownCommand` - Unknown command with suggestions
   - `OptionNotFound` - Option lookup failures
@@ -70,6 +119,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
 - **Result type** - Proper error propagation throughout the API
 
 #### Display System
+
 - **Beautiful help output** with:
   - Formatted tables using box-drawing characters
   - Color-coded sections
@@ -81,6 +131,7 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
 - **"Did you mean?"** suggestions for unknown commands using Levenshtein distance
 
 #### API Improvements
+
 - **Builder pattern** with method chaining
 - **Separate methods** for different concerns:
   - `.add_option()` - Add options
@@ -94,36 +145,45 @@ This is a complete rewrite of Fli with significant improvements to type safety, 
 #### Breaking Changes
 
 ##### Option Definition
+
 **Before (v0.x):**
+
 ```rust
 app.option("-n --name, <>", "Description", callback);
 ```
 
 **After (v1.0):**
+
 ```rust
-app.add_option("name", "Description", "-n", "--name", 
+app.add_option("name", "Description", "-n", "--name",
     ValueTypes::RequiredSingle(Value::Str(String::new())));
 app.set_callback(callback);
 ```
 
 ##### Callback Signature
+
 **Before (v0.x):**
+
 ```rust
 fn callback(app: &Fli) { }
 ```
 
 **After (v1.0):**
+
 ```rust
 fn callback(data: &FliCallbackData) { }
 ```
 
 ##### Value Retrieval
+
 **Before (v0.x):**
+
 ```rust
 let value = app.get_values("name".to_owned()).unwrap()[0];
 ```
 
 **After (v1.0):**
+
 ```rust
 let value = data.get_option_value("name")
     .and_then(|v| v.as_str())
@@ -131,28 +191,35 @@ let value = data.get_option_value("name")
 ```
 
 ##### Command Creation
+
 **Before (v0.x):**
+
 ```rust
 let cmd = app.command("serve", "Description");
 ```
 
 **After (v1.0):**
+
 ```rust
 let cmd = app.command("serve", "Description")?; // Returns Result
 ```
 
 ##### Error Types
+
 **Before (v0.x):**
+
 ```rust
 Result<(), String>
 ```
 
 **After (v1.0):**
+
 ```rust
 Result<(), FliError>
 ```
 
 #### API Changes
+
 - `.option()` renamed to `.add_option()` with new signature
 - `.default()` renamed to `.set_callback()`
 - `.run()` no longer panics, properly handles errors
@@ -223,23 +290,27 @@ See detailed migration instructions below for upgrading from v0.x to v1.0.
 ## [0.1.0] - 2024-XX-XX
 
 ### Added
+
 - New `init_fli_from_toml!()` macro to initialize app from Cargo.toml
   - Reads package name, version, and description at compile time
   - Eliminates need for manual metadata entry
 
 ### Deprecated
+
 - `init_from_toml()` method - Use `init_fli_from_toml!()` macro instead
   - Will be removed in next major release
 
 ## [0.0.10] - 2024-XX-XX
 
 ### Added
+
 - Auto version option to print version using `--version` or `-v`
 - Version information automatically included in help output
 
 ## [0.0.9] - 2024-XX-XX
 
 ### Fixed
+
 - Environment variable issue in TOML reading
   - Now uses `env!` macro for compile-time environment variables
   - Changed from `std::env::var` (runtime) to `env!` (compile-time)
@@ -248,12 +319,14 @@ See detailed migration instructions below for upgrading from v0.x to v1.0.
 ## [0.0.8] - 2024-XX-XX
 
 ### Fixed
+
 - Index out of bounds error when getting values
 - Improved bounds checking in value retrieval
 
 ## [0.0.7] - 2024-XX-XX
 
 ### Added
+
 - Support for setting app version via `.set_version()`
   - Version automatically set from Cargo.toml when using `init_from_toml()`
 - Enhanced help message formatting
@@ -261,6 +334,7 @@ See detailed migration instructions below for upgrading from v0.x to v1.0.
   - Improved help screen layout and readability
 
 ### Improved
+
 - Help message handling with better error context
 - Command suggestion algorithm for typos
 
@@ -268,14 +342,14 @@ See detailed migration instructions below for upgrading from v0.x to v1.0.
 
 ## Version Comparison
 
-| Feature | v0.x | v1.0 |
-|---------|------|------|
-| Type Safety | ❌ String-based | ✅ Enum-based |
-| Error Handling | ❌ String errors | ✅ Typed errors |
-| Subcommands | ⚠️ Limited | ✅ Full support |
-| Help System | ⚠️ Basic | ✅ Beautiful tables |
+| Feature          | v0.x              | v1.0                 |
+| ---------------- | ----------------- | -------------------- |
+| Type Safety      | ❌ String-based   | ✅ Enum-based        |
+| Error Handling   | ❌ String errors  | ✅ Typed errors      |
+| Subcommands      | ⚠️ Limited        | ✅ Full support      |
+| Help System      | ⚠️ Basic          | ✅ Beautiful tables  |
 | Value Extraction | ⚠️ Manual parsing | ✅ Type-safe methods |
-| Documentation | ⚠️ Basic | ✅ Comprehensive |
+| Documentation    | ⚠️ Basic          | ✅ Comprehensive     |
 
 [1.0.0]: https://github.com/codad5/fli/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/codad5/fli/compare/v0.0.10...v0.1.0
