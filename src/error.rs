@@ -50,6 +50,14 @@ pub enum FliError {
         reason: String,
     },
 
+    /// Value type parsing failed
+    #[error("Failed to parse '{value}' as {expected_type}: {reason}")]
+    ValueParseError {
+        value: String,
+        expected_type: String,
+        reason: String,
+    },
+
     // ==================== State Errors ====================
     
     /// Invalid state transition during parsing

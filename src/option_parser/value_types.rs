@@ -1,3 +1,4 @@
+use crate::error::{FliError, Result};
 /// Represents a typed value parsed from command-line arguments.
 ///
 /// Supports common primitive types used in CLI applications.
@@ -24,6 +25,119 @@ pub enum Value {
     /// A boolean value
     Bool(bool),
 }
+
+impl Value {
+    /// Replaces the current value with a new value parsed from a string.
+    ///
+    /// This method attempts to parse the input string according to the expected type
+    /// and updates the value in place if successful.
+    ///
+    /// # Arguments
+    ///
+    /// * `new_value` - The string representation of the new value
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Value)` - A clone of the updated value
+    /// * `Err(FliError)` - If parsing fails
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// let mut val = Value::Int(0);
+    /// val.replace_with_expected_value("42").unwrap();
+    /// assert_eq!(val, Value::Int(42));
+    ///
+    /// let mut val = Value::Bool(false);
+    /// val.replace_with_expected_value("yes").unwrap();
+    /// assert_eq!(val, Value::Bool(true));
+    /// ```
+    pub fn replace_with_expected_value(&mut self, new_value: &str) -> Result<Value> {
+        match self {
+            Value::Str(s) => {
+                *s = new_value.to_string();
+                Ok(self.clone())
+            }
+            Value::Int(i) => {
+                match new_value.parse::<i64>() {
+                    Ok(v) => {
+                        *i = v;
+                        Ok(self.clone())
+                    }
+                    Err(e) => Err(FliError::ValueParseError {
+                        value: new_value.to_string(),
+                        expected_type: "integer (i64)".to_string(),
+                        reason: e.to_string(),
+                    }),
+                }
+            }
+            Value::Float(f) => {
+                match new_value.parse::<f64>() {
+                    Ok(v) => {
+                        *f = v;
+                        Ok(self.clone())
+                    }
+                    Err(e) => Err(FliError::ValueParseError {
+                        value: new_value.to_string(),
+                        expected_type: "float (f64)".to_string(),
+                        reason: e.to_string(),
+                    }),
+                }
+            }
+            Value::Bool(b) => {
+                let v = match new_value.to_ascii_lowercase().as_str() {
+                    "true" | "t" | "1" | "yes" | "y" => Some(true),
+                    "false" | "f" | "0" | "no" | "n" => Some(false),
+                    _ => None,
+                };
+                match v {
+                    Some(val) => {
+                        *b = val;
+                        Ok(self.clone())
+                    }
+                    None => Err(FliError::ValueParseError {
+                        value: new_value.to_string(),
+                        expected_type: "boolean".to_string(),
+                        reason: "expected one of: true, false, t, f, 1, 0, yes, no, y, n (case-insensitive)".to_string(),
+                    }),
+                }
+            }
+        }
+    }
+
+    /// Creates a new `Value` from a string, attempting to parse it according to the type.
+    ///
+    /// This is similar to `replace_with_expected_value` but creates a new value instead
+    /// of modifying an existing one.
+    ///
+    /// # Arguments
+    ///
+    /// * `template` - A template value indicating the expected type
+    /// * `input` - The string to parse
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(Value)` - The parsed value
+    /// * `Err(FliError)` - If parsing fails
+    pub fn from_str_with_type(template: &Value, input: &str) -> Result<Value> {
+        let mut temp = template.clone();
+        temp.replace_with_expected_value(input)?;
+        Ok(temp)
+    }
+}
+
+impl PartialEq for Value {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Value::Str(a), Value::Str(b)) => a == b,
+            (Value::Int(a), Value::Int(b)) => a == b,
+            (Value::Float(a), Value::Float(b)) => (a - b).abs() < f64::EPSILON,
+            (Value::Bool(a), Value::Bool(b)) => a == b,
+            _ => false,
+        }
+    }
+}
+
 /// Defines the type and cardinality of values an option can accept.
 ///
 /// This enum enforces compile-time guarantees about option value requirements:

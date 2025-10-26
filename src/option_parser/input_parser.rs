@@ -1,3 +1,5 @@
+use std::default;
+
 use super::parse_state::ParseState;
 use super::value_types::{Value, ValueTypes};
 use crate::command::FliCommand;
@@ -166,26 +168,27 @@ impl InputArgsParser {
             // Handle AcceptingValue state
             if let ParseState::AcceptingValue(option_name, expected_value_type) = &state {
                 match expected_value_type {
-                    ValueTypes::RequiredSingle(_) => {
+                    ValueTypes::RequiredSingle(default) => {
                         // Check if next arg is another option (error case)
                         if command.get_option_parser().has_option(arg) {
                             return Err(FliError::missing_value(option_name));
                         }
 
+                        let value = default.clone().replace_with_expected_value(arg)?;
                         // Assign the value
                         self.command_chain.push(CommandChain::Option(
                             option_name.clone(),
-                            ValueTypes::RequiredSingle(Value::Str(arg.to_string())),
+                            ValueTypes::RequiredSingle(value.clone()),
                         ));
                         command.get_option_parser().update_option_value(
                             option_name,
-                            ValueTypes::RequiredSingle(Value::Str(arg.to_string())),
+                            ValueTypes::RequiredSingle(value),
                         )?;
                         state.set_next_mode(ParseState::InOption)?;
                         i += 1;
                         continue;
                     }
-                    ValueTypes::OptionalSingle(_) => {
+                    ValueTypes::OptionalSingle(default) => {
                         // If next arg is an option, don't consume it as value
                         if command.get_option_parser().has_option(arg) {
                             self.command_chain.push(CommandChain::Option(
@@ -196,20 +199,25 @@ impl InputArgsParser {
                             continue; // Don't increment i, process this arg as option
                         }
 
+                        let value = default
+                            .clone()
+                            .unwrap_or(Value::Str(String::new()))
+                            .replace_with_expected_value(arg)?;
+
                         // Otherwise, consume as value
                         self.command_chain.push(CommandChain::Option(
                             option_name.clone(),
-                            ValueTypes::OptionalSingle(Some(Value::Str(arg.to_string()))),
+                            ValueTypes::OptionalSingle(Some(value.clone())),
                         ));
                         command.get_option_parser().update_option_value(
                             option_name,
-                            ValueTypes::OptionalSingle(Some(Value::Str(arg.to_string()))),
+                            ValueTypes::OptionalSingle(Some(value)),
                         )?;
                         state.set_next_mode(ParseState::InOption)?;
                         i += 1;
                         continue;
                     }
-                    ValueTypes::RequiredMultiple(_, expected_count) => {
+                    ValueTypes::RequiredMultiple(default, expected_count) => {
                         let mut values = Vec::new();
                         let max_count = expected_count.unwrap_or(usize::MAX);
 
@@ -225,7 +233,13 @@ impl InputArgsParser {
                                 break;
                             }
 
-                            values.push(Value::Str(current_arg.to_string()));
+                            let current_value = default
+                                .get(values.len())
+                                .cloned()
+                                .unwrap_or(Value::Str(String::new()))
+                                .replace_with_expected_value(current_arg)?;
+
+                            values.push(current_value);
                             i += 1;
                         }
 
@@ -252,7 +266,7 @@ impl InputArgsParser {
                         state.set_next_mode(ParseState::InOption)?;
                         continue; // Don't increment i again, it's already advanced
                     }
-                    ValueTypes::OptionalMultiple(_, expected_count) => {
+                    ValueTypes::OptionalMultiple(default, expected_count) => {
                         let mut values = Vec::new();
                         let max_count = expected_count.unwrap_or(usize::MAX);
 
@@ -268,7 +282,20 @@ impl InputArgsParser {
                                 break;
                             }
 
-                            values.push(Value::Str(current_arg.to_string()));
+                            let current_value = if default.is_some() {
+                                default
+                                    .as_ref()
+                                    .unwrap()
+                                    .get(values.len())
+                                    .cloned()
+                                    .unwrap_or(Value::Str(String::new()))
+                                    .replace_with_expected_value(current_arg)?
+                            } else {
+                                Value::Str(String::new())
+                                    .replace_with_expected_value(current_arg)?
+                            };
+
+                            values.push(current_value);
                             i += 1;
                         }
 
