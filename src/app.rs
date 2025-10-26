@@ -322,7 +322,12 @@ impl Fli {
                 display::enable_debug();
             },
         );
+        
         self.mark_inheritable("--debug").unwrap();
 
+        // Check if debug flag is present in args
+        if std::env::args().any(|arg| arg == "-D" || arg == "--debug") {
+            display::enable_debug();
+        }
     }
 }
