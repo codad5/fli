@@ -1,7 +1,7 @@
 [package]
 name = "fli"
 description = "The commander.js like CLI Parser for rust"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 license = "MIT"
 homepage = "https://github.com/codad5/fli"
@@ -14,10 +14,16 @@ categories = [
     "parsing",
     "development-tools::cargo-plugins",
     "text-processing",
-    "development-tools"
+    "development-tools",
 
 ]
 keywords = ["cli", "cli-parser", "parser", "clap", "fli"]
 
+[lib]
+doctest = false
+
+
 [dependencies]
 colored = "2.0.4"
+once_cell = "1.21.3"
+thiserror = "2.0.17"
