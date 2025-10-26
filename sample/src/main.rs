@@ -108,13 +108,17 @@ fn main() {
             let show_all = data.get_option_value("all").is_some();
             let long_format = data.get_option_value("long").is_some();
             let human_readable = data.get_option_value("human").is_some();
-            let verbose = data.get_option_value("verbose").is_some();
+            let verbose = data.get_option_value("verbose");
 
             // Get sort option
             let sort_by = data
                 .get_option_value("sort")
                 .and_then(|v| v.as_str())
                 .unwrap_or("name");
+
+            println!("Verbose: {:?}", verbose);
+
+            let verbose = data.get_option_value("verbose").is_some();
 
             if verbose {
                 println!("{} Listing directory: {}", "→".cyan(), path.yellow());
