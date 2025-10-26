@@ -26,7 +26,7 @@ use std::path::Path;
 
 fn main() {
     // Initialize the CLI app from Cargo.toml with debug mode enabled
-    let mut app = init_fli_from_toml!();
+    let mut app = init_fli_from_toml!().with_debug();
     app.add_debug_option();
 
     // ============================================================================

@@ -322,6 +322,7 @@ impl Fli {
                 display::enable_debug();
             },
         );
+        self.mark_inheritable("--debug").unwrap();
 
     }
 }
