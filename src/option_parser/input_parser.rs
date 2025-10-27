@@ -335,16 +335,14 @@ impl InputArgsParser {
 
                 match expected_value_type {
                     ValueTypes::OptionalSingle(Some(Value::Bool(_))) => {
-                        // Flag option - set to Bool(true) when encountered
+                        // Flag option - set to Bool(true) when encountered, NO value expected
                         let flag_value = ValueTypes::OptionalSingle(Some(Value::Bool(true)));
+                        self.command_chain
+                            .push(CommandChain::Option(arg.to_string(), flag_value.clone()));
                         command
                             .get_option_parser()
-                            .update_option_value(arg, flag_value.clone())?;
+                            .update_option_value(arg, flag_value)?;
                         state.set_next_mode(ParseState::InOption)?;
-                        state.set_next_mode(ParseState::AcceptingValue(
-                            arg.to_string(),
-                            flag_value
-                        ))?;
                     }
                     _ => {
                         // Option requires value(s), transition to AcceptingValue
