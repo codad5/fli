@@ -32,7 +32,7 @@ use fli::{Fli, ValueTypes, Value};
 
 fn main() {
     let mut app = Fli::new("myapp", "1.0.0", "A sample CLI app");
-    
+
     // Add a simple flag
     app.add_option(
         "verbose",
@@ -41,7 +41,7 @@ fn main() {
         "--verbose",
         ValueTypes::OptionalSingle(Some(Value::Bool(false)))
     );
-    
+
     // Add an option that requires a value
     app.add_option(
         "name",
@@ -50,26 +50,27 @@ fn main() {
         "--name",
         ValueTypes::RequiredSingle(Value::Str(String::new()))
     );
-    
+
     // Set the callback
     app.set_callback(|data| {
         let name = data.get_option_value("name")
             .and_then(|v| v.as_str())
             .unwrap_or("World");
-        
+
         let verbose = data.get_option_value("verbose").is_some();
-        
+
         println!("Hello, {}!", name);
         if verbose {
             println!("Verbose mode enabled!");
         }
     });
-    
+
     app.run();
 }
 ```
 
 Run it:
+
 ```bash
 $ cargo run -- -n Alice -v
 Hello, Alice!
@@ -118,10 +119,10 @@ use fli::{Fli, ValueTypes, Value};
 
 fn main() {
     let mut app = Fli::new("git", "2.0.0", "Version control system");
-    
+
     // Create a command
     let commit_cmd = app.command("commit", "Record changes").unwrap();
-    
+
     // Add options to the command
     commit_cmd.add_option(
         "message",
@@ -130,7 +131,7 @@ fn main() {
         "--message",
         ValueTypes::RequiredSingle(Value::Str(String::new()))
     );
-    
+
     commit_cmd.add_option(
         "all",
         "Commit all changes",
@@ -138,21 +139,21 @@ fn main() {
         "--all",
         ValueTypes::OptionalSingle(Some(Value::Bool(false)))
     );
-    
+
     // Set the command callback
     commit_cmd.set_callback(|data| {
         let message = data.get_option_value("message")
             .and_then(|v| v.as_str())
             .unwrap_or("No message");
-        
+
         let all = data.get_option_value("all").is_some();
-        
+
         println!("Committing with message: {}", message);
         if all {
             println!("Including all changes");
         }
     });
-    
+
     app.run();
 }
 ```
@@ -169,25 +170,25 @@ fn my_callback(data: &FliCallbackData) {
     let name = data.get_option_value("name")
         .and_then(|v| v.as_str())
         .unwrap_or("default");
-    
+
     // Get multiple string values
     let files = data.get_option_value("files")
         .and_then(|v| v.as_strings())
         .unwrap_or_default();
-    
+
     // Check if a flag was passed (NEW in v1.2.0)
     // Flags use Bool values: false = not passed, true = passed
     let verbose = data.get_option_value("verbose")
         .map(|v| matches!(v, ValueTypes::OptionalSingle(Some(Value::Bool(true)))))
         .unwrap_or(false);
-    
+
     // Shorter alternative for flags:
     let is_flag_set = data.get_option_value("verbose").is_some();
-    
+
     // Get positional arguments
     let first_arg = data.get_argument_at(0);
     let all_args = data.get_arguments();
-    
+
     // Access the command
     let cmd_name = data.get_command().get_name();
 }
@@ -202,9 +203,9 @@ use fli::{Fli, ValueTypes, Value};
 
 fn main() {
     let mut app = Fli::new("calc", "1.0.0", "Simple calculator");
-    
+
     let calc_cmd = app.command("calculate", "Perform calculation").unwrap();
-    
+
     calc_cmd.add_option(
         "operation",
         "Operation to perform (add, sub, mul, div)",
@@ -212,23 +213,23 @@ fn main() {
         "--operation",
         ValueTypes::RequiredSingle(Value::Str(String::new()))
     );
-    
+
     calc_cmd.set_expected_positional_args(2);
-    
+
     calc_cmd.set_callback(|data| {
         let op = data.get_option_value("operation")
             .and_then(|v| v.as_str())
             .unwrap_or("add");
-        
+
         let args = data.get_arguments();
         if args.len() < 2 {
             eprintln!("Error: Need two numbers");
             return;
         }
-        
+
         let a: f64 = args[0].parse().unwrap_or(0.0);
         let b: f64 = args[1].parse().unwrap_or(0.0);
-        
+
         let result = match op {
             "add" => a + b,
             "sub" => a - b,
@@ -239,15 +240,16 @@ fn main() {
                 return;
             }
         };
-        
+
         println!("{} {} {} = {}", a, op, b, result);
     });
-    
+
     app.run();
 }
 ```
 
 Usage:
+
 ```bash
 $ calc calculate -o add 10 20
 10 add 20 = 30
@@ -260,10 +262,10 @@ use fli::{Fli, ValueTypes, Value};
 
 fn main() {
     let mut app = Fli::new("file-tool", "1.0.0", "File operations");
-    
+
     // File command with subcommands
     let file_cmd = app.command("file", "File operations").unwrap();
-    
+
     // Copy subcommand
     file_cmd.subcommand("copy", "Copy files")
         .add_option(
@@ -284,14 +286,14 @@ fn main() {
             let sources = data.get_option_value("source")
                 .and_then(|v| v.as_strings())
                 .unwrap_or_default();
-            
+
             let dest = data.get_option_value("dest")
                 .and_then(|v| v.as_str())
                 .unwrap_or(".");
-            
+
             println!("Copying {:?} to {}", sources, dest);
         });
-    
+
     // Move subcommand
     file_cmd.subcommand("move", "Move files")
         .add_option(
@@ -305,15 +307,16 @@ fn main() {
             let paths = data.get_option_value("path")
                 .and_then(|v| v.as_strings())
                 .unwrap_or_default();
-            
+
             println!("Moving: {:?}", paths);
         });
-    
+
     app.run();
 }
 ```
 
 Usage:
+
 ```bash
 $ file-tool file copy -s file1.txt file2.txt -d /backup
 Copying ["file1.txt", "file2.txt"] to /backup
@@ -329,9 +332,9 @@ use fli::{Fli, ValueTypes, Value};
 
 fn main() {
     let mut app = Fli::new("greet", "1.0.0", "Greeting application");
-    
+
     let greet_cmd = app.command("greet", "Greet someone").unwrap();
-    
+
     greet_cmd.add_option(
         "name",
         "Name to greet",
@@ -339,7 +342,7 @@ fn main() {
         "--name",
         ValueTypes::RequiredSingle(Value::Str(String::new()))
     );
-    
+
     greet_cmd.add_option(
         "time",
         "Time of day (morning, afternoon, evening)",
@@ -347,7 +350,7 @@ fn main() {
         "--time",
         ValueTypes::OptionalSingle(None)
     );
-    
+
     greet_cmd.add_option(
         "repeat",
         "Number of times to repeat",
@@ -355,40 +358,41 @@ fn main() {
         "--repeat",
         ValueTypes::OptionalSingle(Some(Value::Int(1)))
     );
-    
+
     greet_cmd.set_callback(|data| {
         let name = data.get_option_value("name")
             .and_then(|v| v.as_str())
             .unwrap_or("friend");
-        
+
         let time = data.get_option_value("time")
             .and_then(|v| v.as_str())
             .unwrap_or("Hello");
-        
+
         let greeting = match time {
             "morning" => "Good morning",
             "afternoon" => "Good afternoon",
             "evening" => "Good evening",
             _ => "Hello",
         };
-        
+
         let repeat = data.get_option_value("repeat")
             .and_then(|v| match v {
                 ValueTypes::OptionalSingle(Some(Value::Int(n))) => Some(*n),
                 _ => None,
             })
             .unwrap_or(1);
-        
+
         for _ in 0..repeat {
             println!("{}, {}!", greeting, name);
         }
     });
-    
+
     app.run();
 }
 ```
 
 Usage:
+
 ```bash
 $ greet greet -n Alice -t morning -r 2
 Good morning, Alice!
@@ -441,7 +445,7 @@ use fli::Result;
 
 fn main() -> Result<()> {
     let mut app = Fli::new("myapp", "1.0.0", "Description");
-    
+
     let cmd = app.command("serve", "Start server")?;
     cmd.add_option(
         "port",
@@ -450,7 +454,7 @@ fn main() -> Result<()> {
         "--port",
         ValueTypes::RequiredSingle(Value::Int(8080))
     );
-    
+
     app.run();
     Ok(())
 }
@@ -465,10 +469,10 @@ use fli::init_fli_from_toml;
 
 fn main() {
     let mut app = init_fli_from_toml!();
-    
+
     // App name, version, and description are automatically loaded
     // from your Cargo.toml file
-    
+
     app.run();
 }
 ```
@@ -480,11 +484,13 @@ Version 1.0.0 includes significant improvements but breaks backwards compatibili
 ### Option Syntax
 
 **Before (v0.x):**
+
 ```rust
 app.option("-n --name, <>", "Your name", callback);
 ```
 
 **After (v1.0):**
+
 ```rust
 app.add_option(
     "name",
@@ -498,17 +504,18 @@ app.set_callback(callback);
 
 ### Value Types
 
-| v0.x | v1.0 |
-|------|------|
+| v0.x        | v1.0                                                   |
+| ----------- | ------------------------------------------------------ |
 | (no symbol) | `ValueTypes::OptionalSingle(Some(Value::Bool(false)))` |
-| `<>` | `ValueTypes::RequiredSingle(_)` |
-| `[]` | `ValueTypes::OptionalSingle(_)` |
-| `<...>` | `ValueTypes::RequiredMultiple(vec![], None)` |
-| `[...]` | `ValueTypes::OptionalMultiple(None, None)` |
+| `<>`        | `ValueTypes::RequiredSingle(_)`                        |
+| `[]`        | `ValueTypes::OptionalSingle(_)`                        |
+| `<...>`     | `ValueTypes::RequiredMultiple(vec![], None)`           |
+| `[...]`     | `ValueTypes::OptionalMultiple(None, None)`             |
 
 ### Callbacks
 
 **Before (v0.x):**
+
 ```rust
 fn callback(app: &Fli) {
     let name = app.get_values("name".to_owned()).unwrap()[0];
@@ -516,6 +523,7 @@ fn callback(app: &Fli) {
 ```
 
 **After (v1.0):**
+
 ```rust
 fn callback(data: &FliCallbackData) {
     let name = data.get_option_value("name")
@@ -527,11 +535,13 @@ fn callback(data: &FliCallbackData) {
 ### Commands
 
 **Before (v0.x):**
+
 ```rust
 let cmd = app.command("serve", "Start server");
 ```
 
 **After (v1.0):**
+
 ```rust
 let cmd = app.command("serve", "Start server")?; // Returns Result
 ```
@@ -547,6 +557,7 @@ For a complete migration guide, see [MIGRATION.md](MIGRATION.md).
 ### Quick Fix
 
 **Before (v1.1 and earlier):**
+
 ```rust
 app.add_option(
     "verbose",
@@ -558,6 +569,7 @@ app.add_option(
 ```
 
 **After (v1.2.0+):**
+
 ```rust
 use fli::option_parser::{Value, ValueTypes};
 
@@ -573,12 +585,14 @@ app.add_option(
 ### Checking if a Flag was Passed
 
 **Before (v1.1 - didn't work correctly):**
+
 ```rust
 // This would always be true if the option was defined!
 let verbose = data.get_option_value("verbose").is_some();
 ```
 
 **After (v1.2.0 - works correctly):**
+
 ```rust
 // Method 1: Check the boolean value
 let verbose = data.get_option_value("verbose")
@@ -592,11 +606,13 @@ let verbose = data.get_option_value("verbose").is_some();
 ### Why the Change?
 
 With `ValueTypes::None`:
+
 - ❌ Could not tell if `-v` was passed or not
 - ❌ `get_option_value()` always returned `Some` for defined options
 - ❌ Had to search command chain to check flag usage
 
 With `ValueTypes::OptionalSingle(Some(Value::Bool(...)))`:
+
 - ✅ `Bool(false)` = flag not passed (default)
 - ✅ `Bool(true)` = flag was passed
 - ✅ Can query option parser directly

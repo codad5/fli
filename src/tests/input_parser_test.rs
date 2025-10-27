@@ -13,7 +13,13 @@ fn create_test_command() -> FliCommand {
         "--verbose",
         ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
-    cmd.add_option("quiet", "Quiet mode", "-q", "--quiet", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    cmd.add_option(
+        "quiet",
+        "Quiet mode",
+        "-q",
+        "--quiet",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
     cmd.add_option(
         "output",
         "Output file",
@@ -42,7 +48,13 @@ fn create_test_command() -> FliCommand {
 // Helper function to create a command with subcommands
 fn create_command_with_subcommands() -> FliCommand {
     let mut root = FliCommand::new("app", "Main app");
-    root.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    root.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     root.subcommand("start", "Start service").add_option(
         "port",
@@ -94,7 +106,10 @@ fn test_single_flag_option() {
     match &chain[0] {
         CommandChain::Option(flag, value) => {
             assert_eq!(flag, "-v");
-            assert!(matches!(value, ValueTypes::OptionalSingle(Some(Value::Bool(true)))));
+            assert!(matches!(
+                value,
+                ValueTypes::OptionalSingle(Some(Value::Bool(true)))
+            ));
         }
         _ => panic!("Expected Option variant"),
     }
@@ -633,7 +648,10 @@ fn test_flag_not_passed_but_option_exists() {
     // The option's value is Bool(false) because it wasn't passed
     if let Some(opt) = option {
         assert!(
-            matches!(opt.value, ValueTypes::OptionalSingle(Some(Value::Bool(false)))),
+            matches!(
+                opt.value,
+                ValueTypes::OptionalSingle(Some(Value::Bool(false)))
+            ),
             "Flag NOT passed: value should be Bool(false)"
         );
     }
@@ -660,7 +678,10 @@ fn test_flag_passed_option_exists() {
         CommandChain::Option(flag, value) => {
             assert_eq!(flag, "-v");
             // FLAG WAS PASSED: Should be Bool(true)
-            assert!(matches!(value, ValueTypes::OptionalSingle(Some(Value::Bool(true)))));
+            assert!(matches!(
+                value,
+                ValueTypes::OptionalSingle(Some(Value::Bool(true)))
+            ));
         }
         _ => panic!("Expected Option variant"),
     }
@@ -674,7 +695,10 @@ fn test_flag_passed_option_exists() {
     // Bool(false) = flag was not passed
     if let Some(opt) = option {
         assert!(
-            matches!(opt.value, ValueTypes::OptionalSingle(Some(Value::Bool(true)))),
+            matches!(
+                opt.value,
+                ValueTypes::OptionalSingle(Some(Value::Bool(true)))
+            ),
             "Flag was passed, value should be Bool(true)!"
         );
     }
@@ -737,7 +761,10 @@ fn test_valuetypes_none_design_question() {
     // NEW: Can now query cmd directly for "was -v used?"
     let option = cmd.get_option_parser().get_option_by_short_flag("-v");
     let was_v_used = if let Some(opt) = option {
-        matches!(opt.value, ValueTypes::OptionalSingle(Some(Value::Bool(true))))
+        matches!(
+            opt.value,
+            ValueTypes::OptionalSingle(Some(Value::Bool(true)))
+        )
     } else {
         false
     };

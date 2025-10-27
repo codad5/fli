@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ⚠️ BREAKING CHANGES
 
 1. **`ValueTypes::None` has been REMOVED**
+
    - **Reason**: Critical design flaw - impossible to distinguish between "flag defined" and "flag passed"
    - **Migration**: Replace all `ValueTypes::None` with `ValueTypes::OptionalSingle(Some(Value::Bool(false)))`
    - **How to check if flag was passed**:
