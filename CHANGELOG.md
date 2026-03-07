@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Refined `InputArgsParser` by removing redundant "already prepared" debug log
+- Improved zero-argument command error message for better clarity
+- Hardened regression tests with specific error variant assertions
 
 ## [1.2.1] - 2026-03-07
 

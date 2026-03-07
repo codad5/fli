@@ -1,5 +1,7 @@
 use crate::command::{FliCallbackData, FliCommand};
+use crate::error::FliError;
 use crate::option_parser::{InputArgsParser, Value, ValueTypes};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[test]
 fn test_fli_command_creation() {
@@ -473,8 +475,6 @@ fn test_subcommand_adds_help_flag_to_inherited_options() {
 // Zero-Argument Command Tests (run() behavior)
 // ============================================================================
 
-use std::sync::atomic::{AtomicBool, Ordering};
-
 static ZERO_ARG_CB_CALLED: AtomicBool = AtomicBool::new(false);
 
 fn zero_arg_callback(_data: &FliCallbackData) {
@@ -514,8 +514,9 @@ fn test_run_zero_arg_command_without_callback_fails() {
     let result = cmd.run(parser);
 
     assert!(
-        result.is_err(),
-        "Zero-arg command without callback should fail"
+        matches!(result, Err(FliError::InvalidUsage(_))),
+        "Zero-arg command without callback should fail with InvalidUsage, got: {:?}",
+        result
     );
 }
 

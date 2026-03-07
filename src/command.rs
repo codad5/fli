@@ -878,7 +878,7 @@ impl FliCommand {
             cb(&callback_data);
         } else if chain.is_empty() && preserved_option.is_none() {
             return Err(FliError::InvalidUsage(
-                "No command or arguments provided".to_string(),
+                "No subcommand or callback provided for this command".to_string(),
             ));
         }
 
