@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-03-07
+
+### Fixed
+
+- **Critical bug**: Commands with no options/arguments (e.g., `myapp list`, `myapp status`) failed with "No command or arguments provided" instead of invoking the command's callback
+  - Root cause: `run()` checked for an empty parsed command chain **before** checking for a callback, so zero-argument commands never reached callback execution
+  - Fix: moved the empty-chain error to a late check — only errors if no callback exists and no preserved option was triggered
+  - Affected patterns: any zero-argument command (`list`, `status`, `version`, `whoami`), commands with only optional options where none are provided, and parent commands with both subcommands and a default callback
+
+### Added
+
+- **3 new tests** for zero-argument command behavior:
+  - `test_run_zero_arg_command_with_callback` — verifies callback runs with no args
+  - `test_run_zero_arg_command_without_callback_fails` — verifies error when no callback
+  - `test_run_command_with_only_optional_options_and_callback` — verifies callback runs when optional options are not provided
+
 ## [1.2.0] - 2025-10-26
 
 ### ⚠️ BREAKING CHANGES

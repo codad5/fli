@@ -808,14 +808,6 @@ impl FliCommand {
 
         let chain = arg_parser.get_parsed_commands_chain().clone();
 
-        if chain.is_empty() {
-            return Err(FliError::InvalidUsage(
-                "No command or arguments provided".to_string(),
-            ));
-        }
-
-        let mut chain_iter = chain.iter();
-
         // Collect arguments and check for subcommands
         let mut arguments = Vec::new();
         let mut next_subcommand: Option<(&String, Vec<CommandChain>, usize)> = None;
@@ -884,6 +876,10 @@ impl FliCommand {
 
         if let Some(cb) = callback {
             cb(&callback_data);
+        } else if chain.is_empty() && preserved_option.is_none() {
+            return Err(FliError::InvalidUsage(
+                "No command or arguments provided".to_string(),
+            ));
         }
 
         Ok(())

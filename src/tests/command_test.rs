@@ -170,7 +170,13 @@ fn test_nested_subcommands() {
 #[test]
 fn test_command_clone() {
     let mut cmd = FliCommand::new("test", "Test command");
-    cmd.add_option("opt", "Option", "-o", "--opt", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    cmd.add_option(
+        "opt",
+        "Option",
+        "-o",
+        "--opt",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     let mut cloned = cmd.clone();
     assert_eq!(cloned.get_name(), cmd.get_name());
@@ -186,7 +192,13 @@ fn test_command_with_parser_constructor() {
     use crate::option_parser::CommandOptionsParserBuilder;
 
     let mut builder = CommandOptionsParserBuilder::new();
-    builder.add_option("test", "Test option", "-t", "--test", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    builder.add_option(
+        "test",
+        "Test option",
+        "-t",
+        "--test",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     let mut cmd = FliCommand::with_parser("mycmd", "My command", builder);
 
@@ -209,7 +221,13 @@ fn test_subcommand_inherits_parent_options() {
         "--verbose",
         ValueTypes::OptionalSingle(Some(Value::Bool(false))),
     );
-    parent.add_option("debug", "Debug mode", "-d", "--debug", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    parent.add_option(
+        "debug",
+        "Debug mode",
+        "-d",
+        "--debug",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     // Mark options as inheritable
     parent.get_option_parser().mark_inheritable("-v").unwrap();
@@ -230,9 +248,27 @@ fn test_subcommand_inherits_only_marked_options() {
     let mut parent = FliCommand::new("parent", "Parent command");
 
     // Add multiple options
-    parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
-    parent.add_option("quiet", "Quiet", "-q", "--quiet", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
-    parent.add_option("debug", "Debug", "-d", "--debug", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    parent.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
+    parent.add_option(
+        "quiet",
+        "Quiet",
+        "-q",
+        "--quiet",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
+    parent.add_option(
+        "debug",
+        "Debug",
+        "-d",
+        "--debug",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     // Mark only verbose as inheritable
     parent.get_option_parser().mark_inheritable("-v").unwrap();
@@ -251,12 +287,24 @@ fn test_nested_subcommands_inherit_options() {
     let mut root = FliCommand::new("root", "Root command");
 
     // Add option to root
-    root.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    root.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
     root.get_option_parser().mark_inheritable("-v").unwrap();
 
     // Create first level subcommand
     let level1 = root.subcommand("level1", "Level 1");
-    level1.add_option("debug", "Debug", "-d", "--debug", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    level1.add_option(
+        "debug",
+        "Debug",
+        "-d",
+        "--debug",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
     level1
         .get_option_parser()
         .mark_inheritable_many(&["-v", "-d"])
@@ -274,7 +322,13 @@ fn test_nested_subcommands_inherit_options() {
 fn test_mark_inheritable_with_long_flag() {
     let mut parent = FliCommand::new("parent", "Parent");
 
-    parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    parent.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     // Mark using long flag
     parent
@@ -293,9 +347,27 @@ fn test_mark_inheritable_with_long_flag() {
 fn test_mark_inheritable_many_mixed_flags() {
     let mut parent = FliCommand::new("parent", "Parent");
 
-    parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
-    parent.add_option("quiet", "Quiet", "-q", "--quiet", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
-    parent.add_option("debug", "Debug", "-d", "--debug", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    parent.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
+    parent.add_option(
+        "quiet",
+        "Quiet",
+        "-q",
+        "--quiet",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
+    parent.add_option(
+        "debug",
+        "Debug",
+        "-d",
+        "--debug",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
 
     // Mix short and long flags
     parent
@@ -334,13 +406,25 @@ fn test_inheritable_options_with_default_values() {
 fn test_inheritable_options_builder_creates_independent_copy() {
     let mut parent = FliCommand::new("parent", "Parent");
 
-    parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    parent.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
     parent.get_option_parser().mark_inheritable("-v").unwrap();
 
     // Create child1 and add option to it
     {
         let child1 = parent.subcommand("child1", "Child 1");
-        child1.add_option("opt1", "Option 1", "-o", "--opt1", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+        child1.add_option(
+            "opt1",
+            "Option 1",
+            "-o",
+            "--opt1",
+            ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+        );
         // child1 should have both inherited and its own option
         assert!(child1.get_option_parser().has_option("-v"));
         assert!(child1.get_option_parser().has_option("-o"));
@@ -369,7 +453,13 @@ fn test_mark_nonexistent_option_as_inheritable() {
 fn test_subcommand_adds_help_flag_to_inherited_options() {
     let mut parent = FliCommand::new("parent", "Parent");
 
-    parent.add_option("verbose", "Verbose", "-v", "--verbose", ValueTypes::OptionalSingle(Some(Value::Bool(false))));
+    parent.add_option(
+        "verbose",
+        "Verbose",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
     parent.get_option_parser().mark_inheritable("-v").unwrap();
 
     let child = parent.subcommand("child", "Child");
@@ -377,4 +467,90 @@ fn test_subcommand_adds_help_flag_to_inherited_options() {
     // Child should have both inherited option and auto-added help
     assert!(child.get_option_parser().has_option("-v"));
     assert!(child.get_option_parser().has_option("--help"));
+}
+
+// ============================================================================
+// Zero-Argument Command Tests (run() behavior)
+// ============================================================================
+
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static ZERO_ARG_CB_CALLED: AtomicBool = AtomicBool::new(false);
+
+fn zero_arg_callback(_data: &FliCallbackData) {
+    ZERO_ARG_CB_CALLED.store(true, Ordering::SeqCst);
+}
+
+#[test]
+fn test_run_zero_arg_command_with_callback() {
+    // A command with a callback but no args/options should succeed.
+    // Simulates: `myapp list` where `list` takes no arguments.
+    ZERO_ARG_CB_CALLED.store(false, Ordering::SeqCst);
+
+    let mut cmd = FliCommand::new("list", "List all items");
+    cmd.set_callback(zero_arg_callback);
+
+    let parser = InputArgsParser::new("list".to_string(), vec![]);
+    let result = cmd.run(parser);
+
+    assert!(
+        result.is_ok(),
+        "Zero-arg command with callback should succeed, got: {:?}",
+        result
+    );
+    assert!(
+        ZERO_ARG_CB_CALLED.load(Ordering::SeqCst),
+        "Callback should have been called"
+    );
+}
+
+#[test]
+fn test_run_zero_arg_command_without_callback_fails() {
+    // A command with NO callback and no args should return InvalidUsage.
+    let mut cmd = FliCommand::new("list", "List all items");
+    // No callback set
+
+    let parser = InputArgsParser::new("list".to_string(), vec![]);
+    let result = cmd.run(parser);
+
+    assert!(
+        result.is_err(),
+        "Zero-arg command without callback should fail"
+    );
+}
+
+static OPTIONAL_OPTS_CB_CALLED: AtomicBool = AtomicBool::new(false);
+
+fn optional_opts_callback(_data: &FliCallbackData) {
+    OPTIONAL_OPTS_CB_CALLED.store(true, Ordering::SeqCst);
+}
+
+#[test]
+fn test_run_command_with_only_optional_options_and_callback() {
+    // A command with optional options (none provided) and a callback should succeed.
+    // Simulates: `myapp list` where list has optional `-v` but user doesn't pass it.
+    OPTIONAL_OPTS_CB_CALLED.store(false, Ordering::SeqCst);
+
+    let mut cmd = FliCommand::new("list", "List all items");
+    cmd.add_option(
+        "verbose",
+        "Show details",
+        "-v",
+        "--verbose",
+        ValueTypes::OptionalSingle(Some(Value::Bool(false))),
+    );
+    cmd.set_callback(optional_opts_callback);
+
+    let parser = InputArgsParser::new("list".to_string(), vec![]);
+    let result = cmd.run(parser);
+
+    assert!(
+        result.is_ok(),
+        "Command with optional options and callback should succeed, got: {:?}",
+        result
+    );
+    assert!(
+        OPTIONAL_OPTS_CB_CALLED.load(Ordering::SeqCst),
+        "Callback should have been called"
+    );
 }
