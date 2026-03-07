@@ -119,7 +119,7 @@ impl InputArgsParser {
     /// - Any -> `End`: When parsing completes
     pub fn prepare(&mut self, command: &mut FliCommand) -> Result<&mut Self> {
         if self.is_prepared {
-            println!("Parser is already prepared");
+            // println!("Parser is already prepared");
             return Ok(self);
         }
         let mut state = ParseState::Start;
